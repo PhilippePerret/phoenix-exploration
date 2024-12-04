@@ -28,7 +28,7 @@ config :exploration, ExplorationWeb.Endpoint,
 #
 # For production it's recommended to configure a different adapter
 # at the `config/runtime.exs`.
-config :label, Label.Mailer, 
+config :exploration, Label.Mailer, 
   adapter: Swoosh.Adapters.SMTP,
   relay: System.get_env("SMTP_SERVER"),
   username: System.get_env("SMTP_USERNAME"),
