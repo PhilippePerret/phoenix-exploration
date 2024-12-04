@@ -4,18 +4,18 @@ defmodule Exploration.MixProject do
   def project do
     [
       app: :exploration,
-      version: "0.1.0",
+      version: "0.2.0",
       elixir: "~> 1.14",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
-      deps: deps(),
-      releases: [
-        exploration: [
-          include_executables_for: [:unix],
-          applications: [runtime_tools: :permanent]
-        ]
-      ]
+      deps: deps()#,
+      # releases: [
+      #   exploration: [
+      #     include_executables_for: [:unix],
+      #     applications: [runtime_tools: :permanent]
+      #   ]
+      # ]
 
     ]
   end

@@ -16,7 +16,7 @@ Cette page décrit tout ce que j'ai fait pour déployer cette application Phoeni
       MIX_ENV=prod
       SECRET_KEY_BASE=<ma Secret Key Base obtenue ci-dessus>
       PHX_HOST=icare.alwaysdata.net
-      PORT=8101
+      PORT=8101 # RELEVER LE PORT DANS LA TABLEAU DE BORD
       SMTP_USERNAME=<mon user name>
       SMTP_PASSWORD=<nom mot de passe d'administrateur>
       # DATABASE_URL=icare_exploration # pas de base
@@ -65,9 +65,9 @@ Cette page décrit tout ce que j'ai fait pour déployer cette application Phoeni
       ~~~
       ...
       config :exploration, ExplorationWeb.Endpoint,
-        url: [host: "icare.alwaysdata.net", path: "/phoenix-exploration", port: 8101],
-        http: [port: 8101],
-        server: true, # ajouté par Phil
+        url: [host: "icare.alwaysdata.net", path: "/phoenix-exploration", port: System.get_env("PORT")],
+        http: [port: System.get_env("PORT")],
+        server: true,
         debug_errors: false, # mettre true pour voir les erreurs en production
         cache_static_manifest: "priv/static/cache_manifest.json"
       ~~~
@@ -94,7 +94,7 @@ Cette page décrit tout ce que j'ai fait pour déployer cette application Phoeni
       … je mets :
 
       ~~~
-      port = String.to_integer(System.get_env("PORT") || "8101")
+      port = String.to_integer(System.get_env("PORT"))
       ~~~
 
       > Je n'ai pas repris les informations concernant le mailer, mais c'est peut-être ici qu'il faut les mettre, dans `if config_env() == :prod do`.
@@ -133,7 +133,10 @@ Cette page décrit tout ce que j'ai fait pour déployer cette application Phoeni
 1. J'ajoute un `<base href={~p"/"}>` dans le `<head>` de `root.html.heex`.
 1. Puis je joue `MIX_ENV=prod mix release`.
 
-  => Et je me retrouve encore avec le même erreur, un `GET "/exploration" qui n'est pas défini, comme si l'application était lancée depuis `www.atelier-icare.net` alors qu'elle est lancée depuis `www.atelier-icare.net/exploration`.
-1. J'essaie en mettant plutôt `<base href="https://www.atelier-icare.net/exploration" />` parce que, finalement, mon `<base href={~p"/"}>` est idiot s'il y a déjà un problème à ce niveau-là (mais bon, pour moi, le problème est avant donc ça ne change rien…)
-  
+  => Et je me retrouve encore avec le même erreur, un `GET "/phoenix-exploration" qui n'est pas défini, comme si l'application était lancée depuis `www.atelier-icare.net` alors qu'elle est lancée depuis `www.atelier-icare.net/exploration`. VOIR CI-DESSOUS.
+1. Car là, il ne faut pas oublier, sur ALWAYSDATA, de cocher la case "Exclure le chemin" dans l'onglet "AVANCÉ" des réglages de l'application.
+1. Je coche donc la case "Exclure le chemin" et je valide.
+1. Et je relance le serveur.
+
+  Et cette fois, ça fonctionne ! 🥳😎
 
