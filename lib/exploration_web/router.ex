@@ -17,7 +17,9 @@ defmodule ExplorationWeb.Router do
   scope "/", ExplorationWeb do
     pipe_through :browser
 
+    get "/:page", PageController, :show
     get "/", PageController, :accueil
+
   end
 
   # Other scopes may use custom stacks.
