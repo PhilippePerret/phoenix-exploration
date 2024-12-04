@@ -28,7 +28,16 @@ config :exploration, ExplorationWeb.Endpoint,
 #
 # For production it's recommended to configure a different adapter
 # at the `config/runtime.exs`.
-config :exploration, Exploration.Mailer, adapter: Swoosh.Adapters.Local
+config :label, Label.Mailer, 
+  adapter: Swoosh.Adapters.SMTP,
+  relay: System.get_env("SMTP_SERVER"),
+  username: System.get_env("SMTP_USERNAME"),
+  password: System.get_env("SMTP_PASSWORD"),
+  port: 587,
+  ssl: false,
+  auth: :always,
+  no_mx_lookups: true,
+  retries: 1
 
 # Configure esbuild (the version is required)
 config :esbuild,

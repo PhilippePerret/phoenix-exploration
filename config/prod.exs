@@ -6,6 +6,10 @@ import Config
 # which you should run after static files are built and
 # before starting your production server.
 config :exploration, ExplorationWeb.Endpoint,
+  url: [host: "icare.alwaysdata.net", path: "/phoenix-exploration", port: 8103],
+  http: [port: 80],
+  server: true, # ajouté par Phil
+  debug_errors: true, # true pour voir les erreurs en production
   cache_static_manifest: "priv/static/cache_manifest.json"
 
 # Configures Swoosh API Client
