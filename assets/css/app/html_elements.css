@@ -1,0 +1,35 @@
+/* 
+
+Ici je mets les éléments HTML tels que je les veux (la plupart du temps
+pour retrouver des comportements et des aspects classiques)
+
+*/
+ol, ul {
+  @apply list-outside;
+  display:block;
+  margin-left: 2em;
+}
+
+ul {
+  @apply list-[square];
+}
+
+ol {
+  @apply list-decimal;
+}
+
+ul ul {
+  margin-left:4em;
+}
+
+code {
+  background-color: #333333;
+  color: aliceblue;
+  padding:1px 12px 1.5px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14pt;
+}
+pre code {
+  display:block;
+  padding: 1em;
+}
