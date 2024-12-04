@@ -1,18 +1,16 @@
 # Exploration
 
-To start your Phoenix server:
+## Présentation
 
-  * Run `mix setup` to install and setup dependencies
-  * Start Phoenix endpoint with `mix phx.server` or inside IEx with `iex -S mix phx.server`
+Cette app web sert simplement à partager mon exploration du framework Phoenix et son utilisation pour mes dernières applications.
 
-Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
+## Démarrer l'application
 
-Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
+Pour démarrer le serveur :
 
-## Learn more
+  * Jouer `mix setup` (pour tout installer)
+  * Jouer `mix phx.server`
 
-  * Official website: https://www.phoenixframework.org/
-  * Guides: https://hexdocs.pm/phoenix/overview.html
-  * Docs: https://hexdocs.pm/phoenix
-  * Forum: https://elixirforum.com/c/phoenix-forum
-  * Source: https://github.com/phoenixframework/phoenix
+Vous pouvez alors visiter [`localhost:4000`](http://localhost:4000) dans votre navigateur préféré.
+
+
