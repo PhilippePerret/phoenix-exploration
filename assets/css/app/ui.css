@@ -1,0 +1,25 @@
+body {
+  max-width: 920px;
+}
+
+header {
+  background-color: brown;
+  color: antiquewhite;
+  padding:1em 2em;
+  font-size: 14pt;
+  letter-spacing: 1.8px;
+}
+
+h1, h2, h3 {
+  font-family: Geneva, Helvetica, Arial;
+}
+
+h1 {
+  @apply mt-10 mb-20 ml-5;
+  font-size: 22pt;
+}
+
+body main {
+  padding:2em;
+  font-size: 14pt;
+}
