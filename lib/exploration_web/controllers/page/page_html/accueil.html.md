@@ -1,6 +1,6 @@
 # Bienvenue !
 
-Sur ce site, je partage mon exploration du framework [Phoenix/Elixir](https://www.phoenixframework.org). Il est né de l'envie de partager de façon bien sûr, mais aussi de palier l'absence presque totale de documentation ou d'aide sur le framework dans la langue de [Molière](https://fr.wikipedia.org/wiki/Molière).
+Sur ce site, je partage mon exploration du [framework Phoenix/Elixir](https://www.phoenixframework.org). Il est né de l'envie de partager de façon bien sûr, mais aussi de palier l'absence presque totale de documentation ou d'aide sur le framework dans la langue de [Molière](https://fr.wikipedia.org/wiki/Molière).
 
 Voilà ce que vous pouvez y trouver :
 

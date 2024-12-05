@@ -32,8 +32,17 @@ code {
 pre code {
   display:block;
   padding: 1em;
+  margin:1em;
 }
 
 p {
   text-align: justify;
+  font-size:16pt;
+}
+
+a {
+  color:brown
+}
+header a {
+  color:white;
 }

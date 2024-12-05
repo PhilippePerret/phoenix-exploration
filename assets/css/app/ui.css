@@ -1,5 +1,11 @@
 body {
   max-width: 920px;
+  margin: 0 4em 10em;
+  border:1px solid brown;
+  border-radius:0 0 1em 1em;
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  font-size: 14pt;
+  font-weight: normal;
 }
 
 header {
@@ -15,11 +21,15 @@ h1, h2, h3 {
 }
 
 h1 {
-  @apply mt-10 mb-20 ml-5;
+  @apply mt-10 mb-20;
   font-size: 22pt;
+}
+h2 {
+  margin-top:2em;
+  margin-bottom:1.5em;
+  font-size:18pt;
 }
 
 body main {
   padding:2em;
-  font-size: 14pt;
 }
