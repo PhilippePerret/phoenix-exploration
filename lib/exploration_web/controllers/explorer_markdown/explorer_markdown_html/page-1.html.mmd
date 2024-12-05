@@ -1,0 +1,115 @@
+# Exploration de… MARKDOWN (Package)
+
+Dans cette application, je vais donc tenter de produire un package pour markdown qui soit un peu plus performant que la package actuel.
+
+Dans un premier temps, je voudrais m'intéresser aux *moteurs de rendu* (*Template Engines*) qui permettre de traiter les vues.
+
+## Essai de création d'un engin simple
+
+Après consultation de la documentation sur les moteurs de rendus, je crée le fichier path(lib/exploration_web/controllers/my_markdown_engin.ex) dans lequel je place :
+
+~~~
+defmodule MyMarkdown.Engine do
+  @behaviour Phoenix.Template.Engine
+
+  # Cette méthode est la seule obligatoire
+  def compile(path, name) do
+
+    # Plus tard, on pourra définir des options
+    options = %{}
+
+    path
+    |> File.read!()         # je lis le code du fichier
+    |> mmd_transformations(options)  # je le traite
+    |> EEx.compile_string(engine: Phoenix.HTML.Engine, file: path, line: 1)
+  end
+
+  # Méthode principale de traitement du code
+  defp my_as_html(code, options) do
+    "<p>Je vais transformer le code « #{code} »</p>"
+  end
+
+end 
+~~~
+
+Maintenant, je vais dire à mon application que les fichiers `.mmd` doivent utiliser ce moteur de rendu.
+
+J'ajoute donc à path(config/config.ex) :
+
+~~~
+# in config/config.ex
+
+...
+
+config :phoenix, :template_engines, mmd: MyMarkdown.Engine
+
+...
+~~~
+
+Et je l'essaie sur ma page [*explorer_markdown_html/page-2.html.mmd*](<%= ~p"/explorer/markdown/?ipage=2" %>) (revenir en cliquant sur le bouton « Retour en arrière » du navigateur).
+
+Bingo ! 🥳 Ça fonctionne ! Je suis bien passé par le moteur de rendu et je peux maintenant traiter le code à ma guise.
+
+D'abord, il faut que je règle le problème des balises HTML qui se mettent en dur.
+
+J'obtiens le résultat voulu en ajoutant `|> EEx.compile_string(engine: Phoenix.HTML.Engine, file: path, line: 1)` comme dans le package markdown. Mon code devient :
+
+~~~
+  def compile(path, name) do
+
+    # Plus tard, on pourra définir des options
+    options = %{}
+
+    path
+    |> File.read!()  
+    |> mmd_transformations(options)
+    |> EEx.compile_string(engine: Phoenix.HTML.Engine, file: path, line: 1)
+  end
+~~~
+
+### Traitement Markdown de base
+
+Pour garder les traitements markdown de base, j'ajoute la ligne de traitement :
+
+~~~
+    path
+    |> File.read!()  
+    |> Earmark.as_html!(earmark_options()) # <=== +
+    |> mmd_transformations(options)
+    |> EEx.compile_string(engine: Phoenix.HTML.Engine, file: path, line: 1)
+~~~
+
+Et comme je veux utiliser tous les traitements de PhoenixMarkdown, mais que je ne sais pas encore faire un appel au module à l'intérieur de mon moteur de vue, je copie-colle tout le texte.
+
+### Premiers traitements
+
+En premire lieu, pour cette application d'exploration particulière, comme j'ai beaucoup de chemins d'accès à écrire, je voudrais pouvoir appliquer facilement leur style en utilisant :
+
+~~~elixir
+<%= "path" <> "(chemin/acces/au_fichier)" %>
+~~~
+
+Je crée donc la méthode :
+
+~~~elixir
+defp transforme_paths(code) do
+  Regex.replace(~r"path\((.*)\)"U, code, "<path>\\1</path>")
+end
+~~~
+
+Ma méthode `mmd_transformations` devient donc :
+
+~~~elixir
+defp mmd_transformations(code, _options) do
+  code 
+  |> transforme_paths()
+end
+~~~
+
+
+
+
+Je veux pouvoir traiter les codes `<.fonction ...>`.
+
+
+<.link_next_page index=2 />

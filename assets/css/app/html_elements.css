@@ -38,6 +38,8 @@ pre code {
 p {
   text-align: justify;
   font-size:16pt;
+  margin-top:1em;
+  line-height: 1.2em;
 }
 
 a {
@@ -45,4 +47,8 @@ a {
 }
 header a {
   color:white;
+}
+
+path {
+  color: cadetblue;
 }

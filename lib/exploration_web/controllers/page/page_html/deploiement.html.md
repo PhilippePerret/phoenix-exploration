@@ -2,16 +2,22 @@
 
 Cette page décrit tout ce que j'ai fait pour déployer cette application Phoenix/Elixir sur [alwaysdata](https://alwaysdata.com).
 
-1. Je me connecte en SSH à mon hébergement (`ssh <uname>@ssh-<app>.alwaydata.net`)…
-1. … et je crée un nouveau dossier pour cette application (`mkdir www/phoenix-exploration`).
+1. Je me connecte en SSH à mon hébergement 
+
+    `ssh <uname>@ssh-<app>.alwaydata.net`
+1. … et je crée un nouveau dossier pour cette application
+    `mkdir www/phoenix-exploration`
 1. Je télécharge tous mes fichiers Phoenix dans ce dossier.
 1. Dans mon tableau de bord, je crée un nouveau site :
-    * à l'adresse `www.atelier-icare.net/phoenix-exploration`,
-    * dans _configuration_, je choisis `Elixir`,
-    * je mets en _commande_ `/home/icare/www/phoenix-exploration/_build/prod/rel/exploration/bin/exploration start`,
-    * je mets en _répertoire de travail_ `www/phoenix-exploration/`,
-    * en console, je joue `mix phx.gen.secret` pour obtenir une *Secret Key Base*,
-    * je définis les variables d'_Environnement_ :
+    * à l'adresse « www.atelier-icare.net/phoenix-exploration »,
+    * dans _configuration_, je choisis « _Elixir_ »,
+    * je mets en _commande_ 
+        `/home/icare/www/phoenix-exploration/_build/prod/rel/exploration/bin/exploration start`,
+    * je mets en _répertoire de travail_ « www/phoenix-exploration/ »,
+    * en console, pour obtenir une *Secret Key Base*, je joue
+        `mix phx.gen.secret` ,
+    * je définis les variables d’*Environnement* :
+      
       ~~~
       MIX_ENV=prod
       SECRET_KEY_BASE=<ma Secret Key Base obtenue ci-dessus>
@@ -24,7 +30,7 @@ Cette page décrit tout ce que j'ai fait pour déployer cette application Phoeni
     * je choisis la dernière version d'Elixir (en tout cas celle avec laquelle j'ai créé cette application),
     * je valide les informations (et je reviens donc à l'onglet de mes sites).
 1. Je modifie les configurations, et particulièrement celle en production :
-    * Dans `config/config.exs`, à la place de :
+    * Dans <span class="path">config/config.exs</span>, à la place de :
 
       ~~~
       ...
@@ -113,7 +119,7 @@ Cette page décrit tout ce que j'ai fait pour déployer cette application Phoeni
 1. Je pourrais (peut-être) jouer `MIX_ENV=prod mix phx.server` pour démarrer le site en production, mais sur Alwaysdata, je vais plutôt dans mon tableau de bord, rubrique « Sites » et je clique sur le bouton à droite pour démarrer le site d'exploration de Phoenix.
 1. Et je me rends à l'adresse `https://www.atelier-icare.net/phoenix-exploration/`.
 
-  Et ça ne fonctionne pas…
+    Et ça ne fonctionne pas…
 
 1. ChatGPT me dit d'ajouter dans `mix.exs` :
 
@@ -133,12 +139,14 @@ Cette page décrit tout ce que j'ai fait pour déployer cette application Phoeni
 1. J'ajoute un `<base href={~p"/"}>` dans le `<head>` de `root.html.heex`.
 1. Puis je joue `MIX_ENV=prod mix release`.
 
-  => Et je me retrouve encore avec le même erreur, un `GET "/phoenix-exploration" qui n'est pas défini, comme si l'application était lancée depuis `www.atelier-icare.net` alors qu'elle est lancée depuis `www.atelier-icare.net/exploration`. VOIR CI-DESSOUS.
-1. Car là, il ne faut pas oublier, sur ALWAYSDATA, de cocher la case "Exclure le chemin" dans l'onglet "AVANCÉ" des réglages de l'application.
+    => Et je me retrouve encore avec le même erreur, un `GET "/phoenix-exploration"` qui n'est pas défini, comme si l'application était lancée depuis `www.atelier-icare.net` alors qu'elle est lancée depuis `www.atelier-icare.net/exploration`. VOIR CI-DESSOUS.
+
+1. Car là, **il ne faut pas oublier, sur ALWAYSDATA, de cocher la case "Exclure le chemin" dans l'onglet "AVANCÉ"** des réglages de l'application.
 1. Je coche donc la case "Exclure le chemin" et je valide.
 1. Et je relance le serveur.
 
-  Et cette fois, ça fonctionne ! 🥳😎
+    Et cette fois, ça fonctionne ! 🥳😎
+
 
 ## Actualisation du site
 

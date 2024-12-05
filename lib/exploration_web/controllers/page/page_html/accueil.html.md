@@ -16,7 +16,7 @@ Voilà ce que vous pouvez y trouver :
 [Application EXPLORATION](<%= ~p"/explorer/exploration" %>):
 :En fait, c'est ce site, qui me permet de tester profondément le déploiement de Phoenix (particulièrement sur l'hébergement Alwaysdata).
 
-[Aide au déploiement](<%= ~p"/deploiement" %>):
+[AIDE AU DÉPLOIEMENT](<%= ~p"/deploiement" %>):
 :Sert de feuille de mémoire pour réussir rapidement son déploiement sur l'hébergeur Alwaysdata.
 
 ## Découverte et installation de Phoenix/Elixir

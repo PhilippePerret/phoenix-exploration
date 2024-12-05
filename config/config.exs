@@ -78,6 +78,10 @@ config :phoenix_markdown, :earmark, %{
     breaks: true
   }
 
+# --- Pour mon markdown à moi ---
+config :phoenix, :template_engines, mmd: MyMarkdown.Engine
+
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"
