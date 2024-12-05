@@ -140,3 +140,17 @@ Cette page décrit tout ce que j'ai fait pour déployer cette application Phoeni
 
   Et cette fois, ça fonctionne ! 🥳😎
 
+## Actualisation du site
+
+Tous les sites parlent du déploiement mais jamais… de l'actualisation du site, alors qu'il parait que c'est une force de Phoenix, de pouvoir s'actualiser _à chaud_. Mais je ne sais pas encore trop comment.
+
+Pour le moment, lorsque je dois actualiser l'application, je procède ainsi :
+
+1. Je change le numéro de version dans `mix.exs`. En fonction de l'importance de l'actualisation, je change le premier (actualisation majeure), le seconde (actualisation mineure) ou le troisième (juste une petite correction).
+1. J'actualise tous les fichiers distant (personnellement, j'utilise [le package SFTP](https://codexns.io/products/sftp_for_sublime) de Sublime Text, mais je viens de passer à Visual Code Studio donc je trouverai une solution pour cet IDE bientôt — pour le moment, il ne semble exister une solution que pour du FTP, pas du FTP sécurisé).
+2. Je rejoins mon hébergement par SSH (`ssh <username>@ssh-<app>.alwaysdata.net`) avec une clé RSA qui me dispense d'entrer des informations d'identification.
+3. Je rejoins mon dossier (par exemple, pour cette application _Exploration_, je fais `cd www/phoenix-exploration`).
+4. Je demande une nouvelle release (`MIX_ENV=prop mix release`).
+5. Une fois qu'elle est faite, je rejoins mon tableau de bord, onglet « Sites » et je redémarre mon application.
+
+  > Peut-être que je pourrais redémarrer directement en SSH, il faudra que j'essaie, la prochaine fois.
