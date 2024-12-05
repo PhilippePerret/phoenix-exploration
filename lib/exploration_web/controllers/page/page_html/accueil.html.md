@@ -10,12 +10,14 @@ Voilà ce que vous pouvez y trouver :
 [Application web LECTURE DE QUALITÉ, deuxième exploration](<%= ~p"/explorer/ldq" %>):
 :Seconde exploration, mais presque en parallèle de la précédente, d'une application grandeur nature. Beaucoup de tables jointes, traitement des mails, traitement des connexions nombreuses, nombreux algorithmes.
 
+[Package MARKDOWN](<%= ~p"/explorer/markdown" %>):
+:Cette quatrième application s'intéresse particulièrement à la fabrication d'une dépendance, ici pour améliorer la dépendence _phoenix-markdown_.
 
-Application EXPLORATION:
+[Application EXPLORATION](<%= ~p"/explorer/exploration" %>):
 :En fait, c'est ce site, qui me permet de tester profondément le déploiement de Phoenix (particulièrement sur l'hébergement Alwaysdata).
 
-Package MARKDOWN:
-:Cette quatrième application s'intéresse particulièrement à la fabrication d'une dépendance, ici pour améliorer la dépendence _phoenix-markdown_.
+[Aide au déploiement](<%= ~p"/deploiement" %>):
+:Sert de feuille de mémoire pour réussir rapidement son déploiement sur l'hébergeur Alwaysdata.
 
 ## Découverte et installation de Phoenix/Elixir
 

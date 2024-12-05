@@ -17,10 +17,13 @@ defmodule ExplorationWeb.Router do
   scope "/explorer", ExplorationWeb do
     pipe_through :browser
 
+    get "/exploration", ExplorerExplorationController, :explorer
+    get "/exploration/:page", ExplorerExplorationController, :explorer
     get "/tasker", ExplorerTaskerController, :explorer
     get "/tasker/:page", ExplorerTaskerController, :explorer
     get "/ldq", ExplorerLdQController, :explorer
     get "/ldq/:page", ExplorerLdQController, :explorer
+    get "/markdown", ExplorerMarkdownController, :explorer
     get "/markdown/:page", ExplorerMarkdownController, :explorer
   end
 
