@@ -14,6 +14,16 @@ defmodule ExplorationWeb.Router do
     plug :accepts, ["json"]
   end
 
+  scope "/explorer", ExplorationWeb do
+    pipe_through :browser
+
+    get "/tasker", ExplorerTaskerController, :explorer
+    get "/tasker/:page", ExplorerTaskerController, :explorer
+    get "/ldq", ExplorerLdQController, :explorer
+    get "/ldq/:page", ExplorerLdQController, :explorer
+    get "/markdown/:page", ExplorerMarkdownController, :explorer
+  end
+
   scope "/", ExplorationWeb do
     pipe_through :browser
 
