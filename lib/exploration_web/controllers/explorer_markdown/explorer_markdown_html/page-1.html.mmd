@@ -21,7 +21,11 @@ defmodule MyMarkdown.Engine do
     path
     |> File.read!()         # je lis le code du fichier
     |> mmd_transformations(options)  # je le traite
-    |> EEx.compile_string(engine: Phoenix.HTML.Engine, file: path, line: 1)
+    |> EEx.compile_string(
+        engine: Phoenix.HTML.Engine, 
+        file: path, 
+        line: 1
+        )
   end
 
   # Méthode principale de traitement du code
@@ -55,16 +59,20 @@ D'abord, il faut que je règle le problème des balises HTML qui se mettent en d
 J'obtiens le résultat voulu en ajoutant `|> EEx.compile_string(engine: Phoenix.HTML.Engine, file: path, line: 1)` comme dans le package markdown. Mon code devient :
 
 ~~~
-  def compile(path, name) do
+def compile(path, name) do
 
-    # Plus tard, on pourra définir des options
-    options = %{}
+  # Plus tard, on pourra définir des options
+  options = %{}
 
-    path
-    |> File.read!()  
-    |> mmd_transformations(options)
-    |> EEx.compile_string(engine: Phoenix.HTML.Engine, file: path, line: 1)
-  end
+  path
+  |> File.read!()  
+  |> mmd_transformations(options)
+  |> EEx.compile_string(
+      engine: Phoenix.HTML.Engine, 
+      file: path, 
+      line: 1
+      )
+end
 ~~~
 
 ### Traitement Markdown de base
@@ -72,11 +80,11 @@ J'obtiens le résultat voulu en ajoutant `|> EEx.compile_string(engine: Phoenix.
 Pour garder les traitements markdown de base, j'ajoute la ligne de traitement :
 
 ~~~
-    path
-    |> File.read!()  
-    |> Earmark.as_html!(earmark_options()) # <=== +
-    |> mmd_transformations(options)
-    |> EEx.compile_string(engine: Phoenix.HTML.Engine, file: path, line: 1)
+path
+|> File.read!()  
+|> Earmark.as_html!(earmark_options()) # <=== +
+|> mmd_transformations(options)
+|> EEx.compile_string(engine: Phoenix.HTML.Engine, file: path, line: 1)
 ~~~
 
 Et comme je veux utiliser tous les traitements de PhoenixMarkdown, mais que je ne sais pas encore faire un appel au module à l'intérieur de mon moteur de vue, je copie-colle tout le texte.
