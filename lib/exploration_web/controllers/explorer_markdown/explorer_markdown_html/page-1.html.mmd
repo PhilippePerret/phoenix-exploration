@@ -1,4 +1,6 @@
-# Exploration de… MARKDOWN<br />Création d’un package pour Phoenix/elixir
+<%= raw @titre %>
+
+<%= raw link_other_pages(@page_index, @projet) %>
 
 Dans cette application, je vais donc aller jusqu’à la création d’une extension (ou package, ou dépendance, c’est selon) pour traiter les fichiers markdown, quelque chose de plus étendu que le package [phoenix-markdown]() qui va me servir néanmoins d’exemple.
 
@@ -40,12 +42,11 @@ Ce fichier, à l’heure où vous lisez ces lignes, est très exactement :
 
 load_as_code(assets/css/highlight/perldoc.css)
 
-
 Voilà pour les dépendances pour le moment.
 
 ### Installation
 
-Comme je ne veux pas faire de dépendance pour le moment, je crée juste un dossier dédié dans mon dossier path(lib/exploration_web/components/) qui aura pour nom path(pp_markdown_1.0) (« pp » étant mes initiales) et dans lequel je mettrai tous mes fichiers.
+Comme je ne veux pas faire de dépendance pour le moment (je veux dire : un dossier à charger avec les *deps*), je crée juste un dossier dédié dans mon dossier path(lib/exploration_web/components/) qui aura pour nom path(pp_markdown_1.0) (« pp » étant mes initiales) et dans lequel je mettrai tous mes fichiers.
 
 > J'ajoute la version à la fin du nom du dossier parce que je me sers de ce moteur dans au moins deux applications en ce moment (LdQ et Exploration) et je risque de la bouger dans l'une ou dans l'autre. Donc il faut toujours que je sache quelle est la dernière version j'utilise. Pour le savoir, dès que je fais une modification, j'incrémente la version (je passe par exemple de "3.2" à "3.3"). Lorsque je passe à l'autre application, je peux vérifier que j'ai bien la dernière version.
 
@@ -53,12 +54,17 @@ Mon module s’appellera **PPMarkdown**.
 
 Je commence par mettre dans ce dossier un fichier path(highlighter.ex) que j’ai récupéré dans [nimble-publisher][1] (un autre projet de [José Valim][2], le créateur du langage Elixir).
 
+## Les moteurs de rendu
 
-### Les moteurs de rendu
+Puisque je veux que ça fonctionne en mettant en configuration : 
 
-Dans un premier temps, je voudrais m'intéresser aux *moteurs de rendu* (*Template Engines*) qui permettre de traiter les vues.
+~~~elixir
+config :mon_app, :template_engines, mmd: PPMarkdown.Engine
+~~~
 
-## Essai de création d'un engin simple
+… pour que dès que l’on a un fichier path(mon_fichier.html.mmd) (donc où l’extension est path(.mmd) le fichier soit traité par mon moteur de rendu `PPMarkdown.Engine`.
+
+### Création d'un engin simple
 
 Après consultation de la documentation sur les moteurs de rendus, je crée le fichier path(lib/exploration_web/controllers/my_markdown_engin.ex) dans lequel je place :
 
@@ -66,10 +72,14 @@ Après consultation de la documentation sur les moteurs de rendus, je crée le f
 defmodule PPMarkdown.Engine do
   @behaviour Phoenix.Template.Engine
 
-  # Cette méthode est la seule obligatoire
+  # Cette méthode est la seule obligatoire et
+  # c'est celle qui sera appelée par le rendu (par
+  # la demande de rendu de la page)
+  
   def compile(path, name) do
 
-    # Plus tard, on pourra définir des options
+    # Plus tard, on pourra définir des options à
+    # partir des configurations
     options = %{}
 
     path
@@ -83,34 +93,34 @@ defmodule PPMarkdown.Engine do
   end
 
   # Méthode principale de traitement du code
-  defp my_as_html(code, options) do
+  defp mmd_transformations(code, options) do
     "<p>Je vais transformer le code « #{code} »</p>"
   end
 
 end 
 ~~~
 
-Maintenant, je vais dire à mon application que les fichiers `.mmd` doivent utiliser ce moteur de rendu.
-
-J'ajoute donc à path(config/config.ex) :
-
-~~~elixir
-# in config/config.ex
-
-...
-
-config :phoenix, :template_engines, mmd: MyMarkdown.Engine
-
-...
-~~~
-
-Et je l'essaie sur ma page [explorer_markdown_html/page-2.html.mmd](<%= ~p"/explorer/markdown/?ipage=2" %>) (revenir en cliquant sur le bouton « Retour en arrière » du navigateur).
+Et je l'essaie sur ma page [explorer_markdown_html/page-test.html.mmd](<%= ~p"/explorer/markdown/?ipage=2" %>) (revenir en cliquant sur le bouton « Retour en arrière » du navigateur ou choisir d’ouvrir la page dans une nouvelle fenêtre).
 
 Bingo ! 🥳 Ça fonctionne ! Je suis bien passé par le moteur de rendu et je peux maintenant traiter le code à ma guise.
 
-D'abord, il faut que je règle le problème des balises HTML qui se mettent en dur.
+## Traitements de base
 
-J'obtiens le résultat voulu en ajoutant :
+### HTML embarqué
+
+D'abord, il faut que je règle le problème des balises HTML qui s’écrire « en dur » si elles se trouvent dans le texte. Par exemple, si le code dans la page est :
+
+~~~markdown
+Ceci est une <span id="balise">balise</span>.
+~~~
+
+… alors le code restera tel quel à l’affichage, alors que devrait s’afficher :
+
+~~~document
+Ceci est une balise.
+~~~
+
+J'obtiens ce résultat (en tout cas partiellement) en ajoutant :
 
 ~~~elixir
 |> EEx.compile_string(engine: Phoenix.HTML.Engine, file: path, line: 1)
@@ -135,8 +145,6 @@ def compile(path, name) do
 end
 ~~~
 
-### Traitement Markdown de base
-
 Pour garder les traitements markdown de base, j'ajoute la ligne de traitement :
 
 ~~~elixir
@@ -147,11 +155,11 @@ path
 |> EEx.compile_string(engine: Phoenix.HTML.Engine, file: path, line: 1)
 ~~~
 
-Et comme je veux utiliser tous les traitements de PhoenixMarkdown, mais que je ne sais pas encore faire un appel au module à l'intérieur de mon moteur de vue, je copie-colle tout le texte.
+Et comme je veux utiliser tous les traitements de PhoenixMarkdown, mais que je ne veux pas faire un appel au module à l'intérieur de mon moteur de vue, je copie-colle tout son code dans le mien. Je ferais juste une citation en début de fichier.
 
-### Premiers traitements
+### Premiers ajouts de traitements
 
-En premire lieu, pour cette application d'exploration particulière, comme j'ai beaucoup de chemins d'accès à écrire, je voudrais pouvoir appliquer facilement leur style en utilisant :
+En premier lieu, pour cette application d'exploration particulière, comme j'ai beaucoup de chemins d'accès à écrire, je voudrais pouvoir appliquer facilement leur style en utilisant :
 
 ~~~elixir
 <%= "path" <> "(chemin/acces/au_fichier)" %>
@@ -179,7 +187,7 @@ end
 
 Je veux pouvoir traiter les codes `<.fonction ...>`.
 
-<.link_next_page index=2 />
+<%= raw link_other_pages(@page_index, @projet) %>
 
 
 [1]: https://github.com/dashbitco/nimble_publisher/tree/master

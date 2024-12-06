@@ -68,3 +68,10 @@
 .makeup .vi { color: #00688B } /* Name.Variable.Instance */
 .makeup .vm { color: #00688B } /* Name.Variable.Magic */
 .makeup .il { color: #B452CD } /* Literal.Number.Integer.Long */
+
+.makeup.document,
+.makeup.markdown {
+  font-family: 'Times New Roman', Times, serif;
+  padding:0.5em 1.5em; 
+  font-size: 15pt;
+}

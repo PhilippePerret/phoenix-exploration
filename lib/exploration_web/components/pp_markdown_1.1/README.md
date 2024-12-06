@@ -12,3 +12,4 @@ Moteur de rendu PHOENIX.Elixir pour traitement étendu des fichiers markdown.
 * mise en forme des chemins d'accès (et noms de fichiers/dossiers) à l'aide de `path(to/my/file)`
 * préservation d'entités HTML classiques (qui s'affichent normalement en brut avec phoenix-markdonw)
     * `<br />`
+* ajout de certains styles personnalisés pour les blocs de code (*document*, *markdown*)

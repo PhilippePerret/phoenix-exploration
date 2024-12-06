@@ -25,10 +25,10 @@ defmodule PPMarkdown.Engine do
     path
     |> File.read!()
     |> Earmark.as_html!(earmark_options())
-    |> load_external_code()
     |> handle_smart_tags(path, name)
     |> mmd_transformations(options)
     |> Lighter.highlight(options_lighter)
+    |> load_external_code()
     |> IO.inspect(label: "\nAVANT FINAL:")
     |> final_transformations(options_final)
     |> IO.inspect(label: "\nAPRÈS FINAL:")
@@ -45,7 +45,6 @@ defmodule PPMarkdown.Engine do
     code
     |> reg_replace(@regex_load_as_code, &replace_as_code/2)
     |> reg_replace(@regex_load, fn _, path -> File.read!(path) end)
-
   end
 
   defp replace_as_code(_, path) do
@@ -104,11 +103,20 @@ defmodule PPMarkdown.Engine do
   defp final_transformations(html, options) do
     html 
     |> code_html_restants(options)
+    |> makeup_pour_highlighting(options)
   end
 
   defp code_html_restants(html, _options) do
     html
     |> String.replace(~r/&lt;br( ?\/)?&gt;/, "<br />")
+  end
+
+  @regex_bad_highlight ~r/<code class="(?!makeup)/
+  @remp_bad_highlight "<code class=\"makeup "
+
+  defp makeup_pour_highlighting(html, _options) do
+    html
+    |> String.replace(@regex_bad_highlight, @remp_bad_highlight)
   end
 
   

@@ -41,3 +41,14 @@ h3 {
 body main {
   padding:2em;
 }
+
+div.nav-prev-next-pages {
+  margin-top:2em;
+  margin-bottom: 2em;
+  text-align: right;
+  font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+  min-height:24px;
+}
+div.nav-prev-next-pages span.page-prev {
+  float:left;
+}
