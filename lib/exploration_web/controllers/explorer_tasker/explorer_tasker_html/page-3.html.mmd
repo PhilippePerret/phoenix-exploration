@@ -1,0 +1,421 @@
+<%= raw @titre %>
+<%= raw link_other_pages(@page_index, @projet) %>
+
+
+### Destruction effective de la tâche
+
+Donc, dans le nouvelle méthode que j’ai créée, il faut que :
+
+1) je détruise la tâche choisie,
+2) je retourne vers la liste des tâches,
+3) ou je reste là avec un affichage d’erreur.
+
+Mais avant de détruire la tâche, je voudrais apprendre à la récupérer dans la base de données afin de faire un message de confirmation un peu plus explicite où je n’aurais pas que l’identifiant.
+
+Pour ça, je m’inspire une application exemple que j’ai générée avec `mix phx.gen.html` (ou `live` je ne sais plus) et qui a créé tout le code pour moi.
+
+Ça me permet de créer cette méthode dans path(lib/try1/taches.ex), le module qui contient toutes les méthodes de communication avec la base de données. J’y implémente :
+
+~~~elixir
+# in lib/try1/taches.ex
+
+# sous la fonction 'liste_des_taches'
+def get_tache!(id), do: Repo.get!(Tache, id)
+~~~
+
+Maintenant, dans mon `mount`, je vais pouvoir normalement récupérer la tâche et l’envoyer au render.
+
+> Je crois avoir bien compris, maintenant, que tout ce que j’assignais au `socket` ici était accessible dans son `assigns` donc par `@<nom variable>` comme on peut le lire dans la documentation de Phoenix.
+
+J’essaie donc :
+
+~~~elixir
+def mount(%{"id" => tache_id}, _session, socket) do
+  tache = Try1.Taches.get_tache!(tache_id)
+  {:ok, assign(socket, :tache, tache)}
+end
+~~~
+
+> Note 1
+>
+> J’ai donc remplacé l’utilisation de `tache_id` par `tache`.
+>
+> Note 2
+>
+> Au lieu de `Task1.Taches` je pourrais aussi utiliser `*alias Try1.Taches` et mettre seulement `Taches`. Mais bon… comme ce module ne va pas comporter beaucoup de code, l’alias ne me semble pas se justifier.
+
+J’ai un render maintenant qui utilise `@tache` :
+
+~~~elixir
+def render(assigns) do
+  ~H"""
+  <h2>Confirmation de la suppression</h2>
+  <div>
+    Merci de confirmer la suppression de la tâche 
+    #<%= @tache.id %> 
+    (<%= @tache.titre %>).
+  </div>
+  <div class="center">
+    <.button 
+      phx-click="remove_tache"
+      data-tache_id={@tache.id}
+      >
+      Détruire la tâche <%= @tache.id %>
+    </.button>
+  </div>
+
+  """
+end
+~~~
+
+> Noter tous les `@tache_id` qui ont été remplacés par des `@tache.id`
+
+Je relance le serveur (j’avais interrompu mon travail) avec un `mix phx.mix` en me rendant à l’adresse path(http://localhost:4000/taches/list), je clique sur la poubelle d’une tâche et… miracle ! non seulement aucune erreur ne se produit mais le titre de la tâche s’affiche bien entre parenthèses ! 🥳
+
+J’implémente maintenant, véritablement, la destruction de la tâche.
+
+Dans le « repo-communicateur » (il faudrait que je trouve un nom plus sympa), j’implémente la méthode de destruction en m’inspirant, pareil, des méthodes automatiques que j’ai générées dans d’autres applications références.
+
+~~~elixir
+# in lib/try1/taches.ex
+
+ @doc """
+  Détruit une tâche.
+
+  ## Exemples
+
+      iex> detruis_la_tache(tache)
+      {:ok, %Tache{}}
+
+      iex> detruis_la_tache(tache)
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def detruis_la_tache(%Tache{} = tache) do
+    Repo.delete(tache)
+  end
+
+~~~
+
+Note : Je garde les commentaires, car je sais qu’au-delà de la documentation automatique que ça permet, la section `## Exemples` permet aussi de faire des tests automatiques. Ici, le premier sera jouée, détruisant la tâche, et quand le deuxième essayera de la détruire à nouveau, ça ne sera pas possible. 
+
+Note 2 : je voudrais me servir de ça pour voir comment on gère une erreur de ce type dans ma fonction d’évènement.
+
+Note 3 : Pour le moment, je ne suis pas encore tout à fait à l’aise avec la tournure `%Tache{} = tache` qui est je crois propre à Elixir, pas à Phoenix. Je sais que `%Tache{}` décrit un modèle de type `Tache`, je sais que `tache` sera le nom de l’instance envoyée dans la fonction, mais je ne comprends pas trop le `=` qui lit tout ça…
+
+Intuitivement, je modifie la fonction de cette manière :
+
+~~~elixir
+# in lib/try1_web/live/taches/tache_rem.ex
+
+def handle_event("remove_tache", params, socket) do
+  case Try1.Taches.detruis_la_tache(@tache) do
+  	{:ok, _tache} ->
+    	{:noreply, 
+    		socket |> put_flash(
+    			:info, 
+    			"Tâche ##{@tache.id} détruite avec succès."
+    		)
+    	}
+    {:error, _tache} ->
+    	{:noreply, 
+    		socket |> put_flash(
+    			:error, 
+    			"# Impossible de détruire la tâche ##{@tache.id}.")}
+    end
+  end
+
+~~~
+
+Et j’essaie… 🤞🏼
+
+Evidemment, ça ne passe pas. J’obtiens l’erreur : `(FunctionClauseError) no function clause matching in Try1.Taches.detruis_la_tache/1`.
+
+J’ai l’impression que le message suivant `lib/try1/taches.ex:36: Try1.Taches.detruis_la_tache(nil)` indique que `@tache` est nil.
+
+Je teste `@tache` en entrée de la fonction remove_tache. Je sais qu’il y aurait des meilleurs moyens de pister une donnée, mais je ne sais pas encore le faire. Pour le moment, j’ajoute juste : 
+
+~~~elixir
+def handle_event("remove_tache", params, socket) do
+	IO.puts "@tache="
+	IO.inspect @tache
+	IO.puts "/@tache"
+	...
+~~~
+
+Effectivement `@tache` est `nil` mais pourtant, je la vois définie dans le message d’erreur rouge… Je vais essayer avec `socket.assigns.tache`, peut-être que le raccourci `@` ne fonctionne pas ici…
+
+~~~elixir
+def handle_event("remove_tache", params, socket) do
+	IO.puts "@tache="
+	IO.inspect socket.assigns.tache
+	IO.puts "/@tache"
+	...
+~~~
+
+Bingo ! Cette fois, j’obtiens la tâche. Je vais donc modifier mon code pour prendre la tâche là. Ça donnera, au début de la fonction :
+
+~~~elixir
+def handle_event("remove_tache", params, socket) do
+	tache = socket.assigns.tache
+  case Try1.Taches.detruis_la_tache(tache) do
+~~~
+
+J’ai toujours d’un erreur, mais un peu plus complexe cette fois, systémique, à l’écran :
+
+~~~
+Phoenix.LiveView.ReloadError at GET /taches/1/delete
+Try1Web.TacheRem raised Ecto.NoResultsError during connected mount sending a 404 response
+~~~
+
+Intuitivement, je comprends l’erreur comme ça : ici, je demande à détruire la tâche, puis je reviens sur la même page, où l’on doit confirmer la destruction de cette même page. Sauf que lorsque le `mount` essaie de trouver la tâche, il ne la trouve plus.
+
+Pour vérifier, je peux déjà voir si la tâche a bien été détruite.
+
+J’ouvre une nouvelle fenêtre de terminal au dossier de mon application et je tape :
+
+~~~bash
+> psql -U philippeperret
+psql# \connect try1_dev
+try1_dev# SELECT * FROM taches;
+~~~
+
+… et effectivement, je vois que ma première tâche a bien été détruite ! 🥳
+
+Donc, après la destruction, je dois rediriger vers la liste des tâches. Je modifie la ligne de réussite dans ma méthode `handle_event("remove_tache"...)`
+
+~~~elixir
+# En cas de réussite :
+{ :noreply, 
+	socket 
+		|> put_flash(:info, "Tâche ##{@tache.id} détruite.")
+    |> redirect(to: ~p"/taches/list")
+ }
+~~~
+
+Il faut bien sûr que je revienne à la liste (path(http://localhost:4000/taches/list)) pour choisir une autre tâche à détruire.
+
+J’essaie une nouvelle fois… 🤞🏼	
+
+Ça génère la même erreur… `Try1Web.TacheRem raised Ecto.NoResultsError during connected mount sending a 404 response`.
+
+Apparemment, ça repasse quand même par `mount` même après avoir détruit la tâche. Je vais vérifier pour en être sûr en mettant des points d’entrée dans les fonctions (`IO.puts ‘-> mount’` etc.) et en ne détruisant pas la tâche.
+
+NON, en fait, ça venait simplement du fait que j’utilisais `@tache` dans les messages de résultat au lieu de `tache`. 
+
+Maintenant que c’est corrigé, tout est parfait, la tâche est détruite et on revient à la liste des tâches ! 💪🏼
+
+### Petit reformatage des minutes
+
+Avant de passer à la suite, je voudrais corriger le fait que les minutes s’affichent sur un chiffre quand elles sont inférieures à 10. Je modifie mon helper en ajoutant :
+
+~~~elixir
+def formate_date(date) do
+	...
+	# On ajoute le temps
+  mn = date.minute
+  mn_str = (mn < 10 && "0" || "") <> to_string(mn)
+  d <> " - #{date.hour}:#{mn_str}"
+end
+
+~~~
+
+Yes! 👍
+
+### Try3
+
+Après la destruction de la tâche, je vais passer à « try3 » pour commencer à travailler un gros morceau indispensable : les associations.
+
+> Chaque fois que je fais un nouveau dossier, je détruis le sous-dossier `_build` et `deps` de l’ancien, qui sont particulièrement lourds, puisqu’ils pourront être reconstruits avec les commandes respectives `mix deps.get` et `mix compile` (ou simplement `mix phx.server`)
+
+L’idée, ici, est donc maintenant de travailler avec des jointures de table (donc des clés étrangères, des *associations* comme ils semblent les appeler dans Phoenix — ailleurs aussi ?)
+
+Dans un premier temps, on va créer la mise en édition d’une tâche. Je frémis d’avance.😅
+
+On crée comme d’hab la route,  live aussi, en s’inspirant beaucoup de la destruction de la tâche.
+
+~~~elixir
+# in router.ex
+
+scope "/taches/:id", Try1Web do
+	...
+	live "/edit", TacheEdit
+end
+~~~
+
+Je crée le module path(lib/try1_web/live/taches/tache_edit.ex) en dupliquant simplement le module path(tache_rem.ex) et en faisant les modifications nécessaires. J’obtiens :
+
+~~~elixir
+# in lib/try1_web/live/taches/tache_edit.ex
+
+defmodule Try1Web.TacheEdit do
+  use Try1Web, :live_view
+  import Try1Web.CoreComponents
+
+  alias Try1.Taches
+
+  def render(assigns) do
+    ~H"""
+    <h2>Modification de la tâche</h2>
+    <div>Ici le formulaire</div>
+    """
+  end
+  
+  def mount(%{"id" => tache_id}, _session, socket) do
+    tache = Try1.Taches.get_tache!(tache_id)
+    {:ok, assign(socket, :tache, tache)}
+  end
+
+end
+~~~
+
+Cette fois, je n’ai pas envie de travailler avec la fonction `render` et j’ai lu quelque part que pour ne pas le faire, il suffisait de créer une vue (`.html.heex`) au même niveau avec le même nom de fichier.
+
+Je crée donc le fichier path(lib/try1_web/live/taches/tache_edit.html.heex), je copie-colle dedans le code et je détruis la fonction `render`.
+
+Pour essayer tout de suite l’efficacité, voilà le code que je mets dans la vue, avec déjà un appel à la tâche qui a dû être assignée au socket.
+
+~~~html
+<h2>Modification de la tâche</h2>
+<div>Tache <%= @tache.titre %></div>
+<div>Ici le formulaire</div>
+~~~
+
+Je lance le serveur et je me rends à [path(http://localhost:4000/taches/list)](http://localhost:4000/taches/list). Et je clique sur le bouton d’édition de la première tâche.
+
+J’adore quand ça fonctionne du premier coup ! ✊ (j’avais juste un doute sur la route du bouton d’édition et je n’ai pas voulu vérifier — ce qu’on peut être fou parfois ! 😂).
+
+Maintenant, je vais créer le formulaire. Mais avant ça, je vais modifier un peu le layout pour avoir le texte plus à gauche. Je fais ça en modifiant le fichier path(layouts/app.html.heex) et notamment la classe des deux éléments.
+
+### Le formulaire d’édition de la tâche
+
+Je vais aller chercher le formulaire utilisé pour la création de la tâche puisque ça sera le même. J’imagine que plus tard je pourrai prendre le même fichier-vue, mais pour le moment, je ne sais pas le faire (hormis, peut-être, en utilisant un `render/3` dans une fonction `render/1` de mon module Live ?
+
+Ce formulaire se trouve dans la fonction `render/1` du module path(live/taches/tache.ex).
+
+Pour le moment, si je le copie-colle, ça va générer une erreur normal, puisque la variable `@form` n’est pas définie. Il faut que je fasse comme à la création mais cette fois en prenant les données de la tâche, relevées dans la BdD.
+
+Dans un premier temps, je vais juste m’inspirer du `mount/3` de `tache.ex` pour modifier celui de `tache_edit.ex`. Après quelques tâtonnements (et notamment quelques erreurs à corriger), j’obtiens :
+
+~~~elixir
+# in lib/try1_web/live/taches/tache_edit.ex
+defmodule Try1Web.TacheEdit do
+  use Try1Web, :live_view
+  import Try1Web.CoreComponents
+
+  alias Try1.Taches
+  alias Try1.Tache
+
+  def mount(%{"id" => tache_id}, _session, socket) do
+    tache = Taches.get_tache!(tache_id)
+    {:ok, assign(socket, %{
+        form: to_form(Tache.changeset(%Tache{}, %{})),
+        tache: tache
+      }
+    )}
+  end
+
+end
+~~~
+
+Pour essayer, je vais juste remplacer le deuxième paramètres de `Tache.changeset`, qui est à `%{}`, par la tâche… 🤞🏼
+
+C’est en fait le premier ! Et ça fonctionne ! Les données se placent dans le formulaire !!! 💪🏼🥳👍
+
+> Noter que je garde quand même l’assignation de `tache` pour pouvoir utiliser `@tache` dans la vue, car on ne peut pas tout avoir par `@form`, à commencer par `@form[:id]` pour obtenir l’identifiant (j’aime bien exposer les identifiants).
+
+Mais là, pour la suite, je vais être obligé de réfléchir. Si je voulais me précipiter, je copie-collerais les méthodes d’évènement « save » et « validate » de l’autre module pour que ça fonctionne tout de suite ici… Mais est-ce vraiment la meilleure manière de faire, entendu que ça ne serait pas DRY du tout (DRY = Don’t Repeat Yourself = Ne te répète pas, ne répète pas de code). Il doit bien y avoir une méthode pour récupérer les autres.
+
+Intuitivement, je me dirais qu’il suffirait d’importer `tache.ex` dans `tache_edit.ex` pour *hériter* des fonctions (tout en écrasant celle qui doivent être propres, mais je ne trouve pas ça super élégant. Je vais aller voir comment c’est géré dans d’autres applications.
+
+> En explorant du code, je suis tombé sur cette tournure que je compte bien utiliser : 
+>
+> ~~~html
+> <.back 
+> 	navigate={~p"/products"}
+> >Back to products</.back>
+> ~~~
+
+Dans un des codes explorés, les deux vues (« edit » et « new ») font simplement appel au même helper en envoyant leur `changeset` et leur `action`. 
+
+L’exemple fonctionne avec beaucoup de convention. Je le détaille :
+
+L’objet édité/créé est un `product` (un produit). Dans un dossier path(lib/app_web/controllers/product_html/) on trouve :
+
+* `new.html.heex` qui est la vue qui va permettre de créer le produit au départ,
+* `edit.html.heex`, la vue qui va permettre d’éditer le produit ensuite
+* `product_form.html.heex` qui contient le formulaire. Je crois que ce nom est défini par convention et doit impérativement s’appeler comme ça. Il est construit à partir de : path(<model>_form.html.heex)
+
+Détail du contenu de chaque fichier, pour bien comprendre (NB. Je ne prends que les lignes qui sont intéressantes pour notre compréhension) :
+
+**`new.html.heex`**
+
+~~~html
+<.product_form 
+	changeset={@changeset}
+	action={~p"/products"} 
+/>
+~~~
+
+**`edit.html.heex`**
+
+~~~html
+<.header>
+  Edit Product <%= @product.id %>
+</.header>
+
+<.product_form 
+	changeset={@changeset}
+	action={~p"/products/#{@product}"} 
+/>
+~~~
+
+**`product_form.html.heex`**
+
+~~~html
+<.simple_form :let={f} for={@changeset} action={@action}>
+  <.error :if={@changeset.action}>
+    Oops, des erreurs ! Cf. ci-dessous.
+  </.error>
+  <.input field={f[:title]} type="text" label="Title" />
+  <.input field={f[:description]} type="text" label="Description" />
+  <.input field={f[:price]} type="number" label="Price" step="any" />
+  <.input field={f[:views]} type="number" label="Views" />
+  <:actions>
+    <.button>Save Product</.button>
+  </:actions>
+</.simple_form>
+
+~~~
+
+La seule différence *fonctionnelle* notable, c’est la différence de `action` :
+
+* `/products/<id produit>` pour l’édition,
+* `/products` (donc la liste, je pense) pour la création.
+
+Donc la création conduit à la liste des produits tandis que l’édition conduit à l’affichage du produit.
+
+Le helper path(.product_form) est défini dans  :
+path(lib/app_web/controllers/product_html.ex). Ici aussi, le nom est défini par convention pour pouvoir fonctionner, je pense (j’en suis même presque certain. Dans ce module, le helper est simplement implémenté pour charger (par défaut) sa vue (le path(product_form.html.heex) ci-dessus) :
+
+~~~elixir
+defmodule HelloWeb.ProductHTML do
+  use HelloWeb, :html
+
+  embed_templates "product_html/*"
+
+  @doc """
+  Renders a product form.
+  """
+  attr :changeset, Ecto.Changeset, required: true
+  attr :action, :string, required: true
+
+  def product_form(assigns)
+end
+~~~
+
+On notera, comme je l’ai lu dans la documentation, la déclaration des variables au-dessus de la fonction avec les `attr`. On retrouve, en toute logique, `changeset` et `action`.
+
+On note la ligne 4 qui indique le dossier où prendre les vues.
+
+<%= raw link_other_pages(@page_index, @projet) %>

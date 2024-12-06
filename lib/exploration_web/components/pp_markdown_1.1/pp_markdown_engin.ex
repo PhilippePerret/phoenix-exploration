@@ -1,3 +1,14 @@
+# Notes
+# -----
+#
+# [N001]
+#   Plutôt que de traiter les blocs de code (<pre><code> ... </code></pre>) qui
+#   pourraient être traités par d'autres fonctions, peut-être serait-il plus 
+#   judicieux de les retirer au début, de les replacer par des balises __BLOCCODE-XX__,
+#   de traiter le code restant, puis de les remettre en remplaçant les balises
+#   et en mettant dans un <pre><code> ... </code></pre>
+#
+#
 defmodule PPMarkdown.Engine do
   @behaviour Phoenix.Template.Engine
 
@@ -24,6 +35,7 @@ defmodule PPMarkdown.Engine do
 
     path
     |> File.read!()
+    |> first_transformations(options)
     |> Earmark.as_html!(earmark_options())
     |> handle_smart_tags(path, name)
     |> mmd_transformations(options)
@@ -34,6 +46,44 @@ defmodule PPMarkdown.Engine do
     |> IO.inspect(label: "\nAPRÈS FINAL:")
     |> EEx.compile_string(engine: Phoenix.HTML.Engine, file: path, line: 1)
   end
+
+  defp first_transformations(code, options) do
+    code 
+    |> protege_elixir_tags_in_blockcode(options)
+    |> protege_exilir_tags_in_code(options)
+  end
+
+  # Concernant ce traitement, voir aussi la note [N001] en haut de page
+  @reg_code_block ~r/(\n| *|\t*)\~\~\~((?:.|\n)*)\1\~\~\~/Um
+  @reg_code ~r/(\`)(.*)\1/
+  @reg_elixir_tag ~r/<%/
+  @remp_elixir_tag "<%=\"<\"<>\"%\"%>"
+
+  defp protege_elixir_tags_in_blockcode(code, options) do
+    protege_elixir_tags_in(code, @reg_code_block, options)
+  end
+
+  defp protege_exilir_tags_in_code(code, options) do
+    protege_elixir_tags_in(code, @reg_code, options)
+  end
+
+  defp protege_elixir_tags_in(code, regex, _options) do
+    code
+    # |> String.replace(@reg_code_block, "[CODE SUPPRIMÉ]")
+    |> String.replace(regex, fn resultat ->
+      resultat
+      |> String.replace(@reg_elixir_tag, @remp_elixir_tag)
+    end)
+  end
+
+  # defp correct_exilir_tag_in(resultat) do
+  #   blockcode = Enum.fetch(resultat, 1)
+  #   IO.inspect(blockcode, label: "\nblockcode:")
+  #   # blockcode
+
+  #   "[CODE SUPPRIMÉ]"
+  # end
+  
 
   @regex_load ~r/load\((.*)\)/U
   @regex_load_as_code ~r/load_as_code\((.*)\)/U

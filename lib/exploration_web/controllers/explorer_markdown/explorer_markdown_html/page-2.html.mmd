@@ -1,7 +1,34 @@
 <%= raw @titre %>
-
 <%= raw link_other_pages(@page_index, @projet) %>
 
-Le contenu de la page.
+### Premiers ajouts de traitements
+
+En premier lieu, pour cette application d'exploration particulière, comme j'ai beaucoup de chemins d'accès à écrire, je voudrais pouvoir appliquer facilement leur style en utilisant :
+
+~~~elixir
+<%= "path" <> "(chemin/acces/au_fichier)" %>
+~~~
+
+Je crée donc la méthode :
+
+~~~elixir
+defp transforme_paths(code) do
+  Regex.replace(~r"path\((.*)\)"U, code, "<path>\\1</path>")
+end
+~~~
+
+Ma méthode `mmd_transformations` devient donc :
+
+~~~elixir
+defp mmd_transformations(code, _options) do
+  code 
+  |> transforme_paths()
+end
+~~~
+
+
+---
+
+Je veux pouvoir traiter les codes `<.fonction ...>`.
 
 <%= raw link_other_pages(@page_index, @projet) %>

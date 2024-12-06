@@ -1,0 +1,408 @@
+<%= raw @titre %>
+<%= raw link_other_pages(@page_index, @projet) %>
+
+Maintenant, je veux rejoindre la liste des tâches après en avoir créé une.
+
+Mais quand je reviens à : 
+
+~~~elixir
+# Dans handle_event("save" de tache.ex
+{:ok, tache} ->
+	socket
+  |> put_flash(:info, "Tâche créée avec succès !")
+  |> redirect(to: ~p"/taches/#{tache}")
+~~~
+
+… ça lève une erreur :
+
+~~~bash
+Compiling 2 files (.ex)
+    error: undefined function sigil_p/2 (expected Try1Web.Tache to
+    define such a function or for it to be imported, but none are
+    available)
+    │
+ 42 │         |> redirect(to: ~p"/taches/#{tache}")
+    │                         ^^^^^^^
+    │
+    └─ (try1 0.1.0) lib/try1_web/live/taches/tache.ex:42:25: 
+    Try1Web.Tache.handle_event/3
+~~~
+
+Pour palier cette erreur, ChatGPT m’a fait ajouté dans le fichier path(lib/try1_web.ex) :
+
+~~~elixir
+def live_view do
+	quote do
+  	use Phoenix.LiveView,
+    	layout: {Try1Web.Layouts, :app}
+
+		@router Try1Web.Router # <==== ÇA
+
+    unquote(html_helpers())
+  end
+end
+
+~~~
+
+MAIS ÇA NE FONCTIONNE PAS.
+
+Pour avoir les messages dans la page, j’ai ajouté `<.flash_group flash={@flash} />` dans mon root **à la ligne 4** :
+
+~~~html
+# in try1_web/components/layouts/root.html.heex
+
+<body class="bg-white">
+	<.flash_group flash={@flash} />
+  <%= @inner_content %>
+</body>
+
+~~~
+
+De cette manière, quand je crée la nouvelle tâche, ça m’écrit le message.
+
+### Vers la liste des tâches
+
+Maintenant, je voudrais que lorsque j’ai enregistré la tâche, on redirige vers la liste des tâches avec la route path(/taches/list)
+
+Je commence par créer la route :
+
+~~~elixir
+# dans router.ex
+
+	scope "/taches", Try1Web do
+    pipe_through :browser
+
+    get "list", TachesController, :list 			# <===
+    live "/new", Tache #, :new
+  end
+
+~~~
+
+Cette fois, j’utilise un contrôleur (je me dis que pour cette liste je n’aurai pas besoin de contrôler ça en LiveView mais c’est surtout pour voir si j’arrive à faire ça).
+
+Bien sûr, ça provoque une erreur puisque le contrôleur n’existe pas.
+
+Je le crée dans un fichier path(/lib/try1web/controllers/taches_controller.ex) dans lequel je mets :
+
+~~~elixir
+defmodule Try1Web.TachesController do
+  use Try1Web, :controller
+
+  def list(conn, _params) do
+    text(conn, "La liste des tâches.")
+  end
+  
+end
+~~~
+
+Cette méthode fonctionne parfaitement et quand je crée une nouvelle tâche j’affiche juste « La liste des tâches » dans la page.
+
+Je vais créer une vue pour faire : 
+
+~~~elixir
+defmodule Try1Web.TachesController do
+  use Try1Web, :controller
+
+  def list(conn, _params) do
+    render(conn, :list)
+  end
+  
+end
+~~~
+
+Je crée déjà le module HTML qui va permettre de gérer la page HTML, dans path(lib/try1_web/controllers/taches_html.ex) :
+
+~~~elixir
+defmodule Try1Web.TachesHTML do
+
+  use Try1Web, :html
+
+  embed_templates "taches_html/*"
+
+end
+~~~
+
+Ensuite je crée la vue dans  :
+path(lib/try1_web/controllers/taches_html/list.html.heex) avec un peu de code :
+
+~~~html
+<h1>Liste des tâches</h1
+~~~
+
+> Note : Dans `lib/try1_web/components/layouts/app.html.heex` j'ai dû retirer le `<header>` pour ne pas avoir l’entête par défaut de Phoenix.
+
+> TODO : Penser à régler le problème du formulaire qui ne traite plus les erreurs, maintenant. Ça recharge la page, mais ça ne fait rien.
+
+…
+
+Je galère bien pour essayer d’enregistrer la tâche et de passer à la suite…
+
+Et puis un moment, en ajoutant :
+
+~~~elixir
+  use Try1Web, :live_view
+~~~
+
+… au-dessus du module `Try1Web.Tache` dans path(lib/try1_web/live/taches/tache.ex) j’obtiens un truc différent :
+
+* les styles ont l’air de s’appliquer
+* les messages d’erreur s’affichent
+* je n’ai plus de problème avec la ligne `redirect(to: {~p"/taches/list"})` (même si ça ne fonctionne pas encore)
+
+… mais ça n’enregistre toujours pas, en mettant un message d’erreur que je n’ai pas le temps de lire (« hang » quelque chose).
+
+### Explication galère
+
+Ma galère venait simplement du fait que je croyais que `redirect/3` retournait un tuple de type `{:noreply, ...}` ou autre… Alors qu’en fait, dans la fonction évènement, il faut que je mette :
+
+~~~elixir
+def handle_event("save", %{"tache" => tparams}, socket) do
+	case Taches.creer_la_tache(tparams) do
+  	{:ok, _tache} ->
+    	{:noreply, socket
+      	|> put_flash(:info, "Tâche créée avec succès !")
+        |> redirect(to: ~p"/taches/list")
+      }
+    {:error, %Ecto.Changeset{} = changeset} ->
+    	{:noreply, socket 
+                 |> assign(check_errors: true) 
+                 |> to_form(changeset)}
+	end
+end
+
+~~~
+
+Apparemment, il est donc préférable que je remplace `use Phoenix.LiveView` par `use Try1Web, :live_view` (qui permet d’avoir les sigils — au moins ~p).
+
+### Poursuite affichage liste
+
+Je poursuis l’affichage de la liste des tâches (avec toutes mes manips, je commence à en avoir pas mal)
+
+J’ai fait tout à l’heure une vue pour la liste, je ne sais plus si j’en ai parlé. Elle contient (dans le fichier path(try1_web/controllers/taches_html/list.html.heex)) :
+
+~~~html
+<h1>Liste des tâches</h1>
+
+<.link 
+  href={~p"/taches/new"}>
+  <button class="p-4 border-4">Créer une nouvelle tâche</button>
+</.link>
+
+<.table id="taches" rows={@taches}>
+
+</.table>
+
+~~~
+
+Pour le moment, si j’affiche la liste (en créant une nouvelle tâche), ça m’indique que `@taches` n'est pas connue et pour cause. Donc je l’ajoute au rendu :
+
+~~~elixir
+defmodule Try1Web.TachesController do
+
+  use Try1Web, :controller
+
+  alias Try1.Taches
+
+  def list(conn, _params) do
+    render(
+    	conn, 
+    	:list, 
+    	taches: Taches.liste_des_taches() # <= ici
+    	)
+  end
+
+end
+~~~
+
+> Rappel : liste_des_taches a été défini dans le fichier path(lib/try1/taches.ex) et retourne simplement `Repo.all(Tache)`
+
+Cette fois-ci, la vue connait `@taches` mais se plaint que `key :col not found in: %{...}`. La map est vraisemblablement celle envoyée par `<.table>`.
+
+Je vais fouiller un peu cette fonction-balise.
+
+…
+
+En fait, il suffit de définir les colonnes de la table à l’aide de :
+
+~~~html
+<.table id="taches" rows={@taches}>
+	<:col 
+		:let={tache} 
+		label="titre"
+	>
+		<%= tache.titre %>
+	</:col>
+</.table>
+~~~
+
+On donne dans `:let=` la valeur qu’on utilisera dans `<%= <var> %>`.
+
+Je vais ajouter aussi la colonne `due_at` pour essayer de la formater.
+
+~~~html
+<.table id="taches" rows={@taches}>
+	<:col 
+		:let={tache} 
+		label="titre"
+	>
+		<%= tache.titre %>
+	</:col>
+  <:col
+    :let={tache}
+    label="due à"
+  >
+    <%= tache.due_at %>
+  </:col>
+</.table>
+~~~
+
+Puisque je veux formater la date, je vais en profiter pour faire un helper :
+
+~~~html
+  <:col
+    :let={tache}
+    label="due à"
+  >
+    <%= formate_date(tache.due_at) %>
+  </:col>
+~~~
+
+Cette méthode (après avoir tâtonner) doit s’’implémenter dans le fichier path(taches_html.ex) :
+
+~~~elixir
+def formate_date(date) do
+	date
+end
+~~~
+
+Il doit surement exister avec `Gettext` des méthodes pratiques, mais je vais tout fait avec cette date.
+
+La méthode finale à laquelle j’arrive (merci Ruby) :
+
+~~~elixir
+	@doc """
+	Retourne la date et l'heure sous la forme
+	jj/mm/aaaa - h:mm
+	
+	Si l'année est la même qu'aujourd'hui, le
+	format de la date se limite à "jj/mm"
+	
+		iex> formate_date(~N[2001-11-30 06:32:15])
+		20/11/2001 - 06:32:15
+	"""
+	def formate_date(date) do
+    str = "#{date.day}/#{date.month}"
+    # On ajoute l'année si elle diffère de 
+    # l'année courante
+    if date.year != DateTime.utc_now.year do
+      str = str <> "/#{date.year}"
+    end
+    # On ajoute le temps
+    str = str <> " - #{date.hour}:#{date.minute}"
+
+    str
+  end
+
+~~~
+
+### Petits boutons outils
+
+Je voudrais maintenant des boutons-outils pour :
+
+* éditer la tâche
+* supprimer la tâche
+
+J’ajoute ces deux colonnes à ma table :
+
+~~~html
+  <:col :let={tache}>
+    <.link
+      href={~p"/taches/#{tache}/edit"}
+      >
+      <button>✍🏽</button>
+    </.link>
+  </:col>
+  <:col :let={tache}>
+    <.link href={~p"/taches/#{tache}/delete"}>
+      <button>🗑️</button>
+    </.link>
+  </:col>
+~~~
+
+Je vais implémenter d’abord la méthode pour détruire une tâche (sans confirmation pour le moment, mais je sais qu’il existe un process).
+
+J’ajoute le traitement de la route. J’essaie d’abord de le faire avec un `live` pour voir si je peux le faire sans recharger la page (si j’ai bien compris) :
+
+~~~elixir
+# in router.ex
+
+scope "/taches/:id", Try1Web do
+
+	live "/new", Tache
+	live "/delete", TacheRem
+end
+~~~
+
+J’ai tout mis en place dans un module `TacheRem` (« Rem » pour « Remove ») car en fait j’ai compris, peut-être à tort, qu’il faut un module par route (puisque `live` ci-dessus ne semble admettre que 2 paramètres).
+
+Donc, j’ai créé (assez facilement, je suis content) le module<br />path(lib/try1_web/live/taches/tache_rem.ex) :
+
+~~~elixir
+defmodule Try1Web.TacheRem do
+  use Try1Web, :live_view
+  import Try1Web.CoreComponents
+~~~
+
+C’est la base, ensuite je fais la fonction requise `render` pour pouvoir valider la suppression (toujours dans le fichier ci-dessus).
+
+~~~elixir
+  def render(assigns) do
+    ~H"""
+    <h2>Confirmation de la suppression</h2>
+    <div>
+    	Merci de confirmer la suppression de
+    	la tâche #<%= @tache_id %>.
+    </div>
+    <div class="center">
+      <.button phx-click="remove_tache">
+        Détruire la tâche <%= @tache_id %>
+      </.button>
+    </div>
+
+    """
+  end
+~~~
+
+Ci-dessus, on notera simplement :
+
+* la propriété `tache_id` qu’il faudra assigner au socket en temps voulu,
+* le bouton contenant `phx-click` et décrivant donc ce qui se passera en *live* quand on cliquera sur le bouton (j’étais parti au départ sur un formulaire mais c’est tout à fait inutile).
+* l’évènement « remove_tache » que je vais invoquer en cliquant sur le bouton.
+
+Je poursuis le fichier avec la fonction requise `mount` :
+
+~~~elixir
+  def mount(%{"id" => tache_id}, _session, socket) do
+    {:ok, assign(socket, :tache_id, tache_id)}
+  end
+~~~
+
+Ici, on remarquera comment je récupère l’identifiant de la tâche. Il était nommé `:id` dans la route, donc je le récupère par `“id”` dans les paramètres ici (1er paramètre de la fonction — je commence à comprendre un peu comment fonctionne ces Map).
+
+Et ensuite, ligne 2, je n’oublie pas d’assigner la valeur à `socket` pour pouvoir la récupérer dans le render.
+
+Enfin, puisque l’évènement généré pour provoquer la destruction s’appelle `remove_tache`, je crée la fonction ad-hoc :
+
+~~~elixir
+ def handle_event("remove_tache", params, socket) do
+ 		tache_id = socket.assigns.tache_id
+ 		msg = "J'ai détruit la tâche ##{tache_id}."
+    socket = socket
+    |> put_flash(:info, msg)
+    {:noreply, socket}
+  end
+~~~
+
+Pour le moment, cette fonction ne fait rien d’autre qu’afficher un message victorieux alors qu’elle n’a rien fait de sa vie…
+
+<%= raw link_other_pages(@page_index, @projet) %>

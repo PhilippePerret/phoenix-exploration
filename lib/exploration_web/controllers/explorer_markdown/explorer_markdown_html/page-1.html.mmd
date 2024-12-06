@@ -1,5 +1,4 @@
 <%= raw @titre %>
-
 <%= raw link_other_pages(@page_index, @projet) %>
 
 Dans cette application, je vais donc aller jusqu’à la création d’une extension (ou package, ou dépendance, c’est selon) pour traiter les fichiers markdown, quelque chose de plus étendu que le package [phoenix-markdown]() qui va me servir néanmoins d’exemple.
@@ -156,36 +155,6 @@ path
 ~~~
 
 Et comme je veux utiliser tous les traitements de PhoenixMarkdown, mais que je ne veux pas faire un appel au module à l'intérieur de mon moteur de vue, je copie-colle tout son code dans le mien. Je ferais juste une citation en début de fichier.
-
-### Premiers ajouts de traitements
-
-En premier lieu, pour cette application d'exploration particulière, comme j'ai beaucoup de chemins d'accès à écrire, je voudrais pouvoir appliquer facilement leur style en utilisant :
-
-~~~elixir
-<%= "path" <> "(chemin/acces/au_fichier)" %>
-~~~
-
-Je crée donc la méthode :
-
-~~~elixir
-defp transforme_paths(code) do
-  Regex.replace(~r"path\((.*)\)"U, code, "<path>\\1</path>")
-end
-~~~
-
-Ma méthode `mmd_transformations` devient donc :
-
-~~~elixir
-defp mmd_transformations(code, _options) do
-  code 
-  |> transforme_paths()
-end
-~~~
-
-
-
-
-Je veux pouvoir traiter les codes `<.fonction ...>`.
 
 <%= raw link_other_pages(@page_index, @projet) %>
 
