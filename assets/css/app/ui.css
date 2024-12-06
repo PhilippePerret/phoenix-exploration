@@ -24,12 +24,18 @@ h1, h2, h3 {
 
 h1 {
   @apply mt-10 mb-20;
-  font-size: 22pt;
+  font-size: 24pt;
 }
 h2 {
-  margin-top:2em;
+  margin-top:3em;
   margin-bottom:1.5em;
-  font-size:18pt;
+  font-size:20pt;
+}
+
+h3 {
+  margin-top:2.4em;
+  margin-bottom:1em;
+  font-size:17pt;
 }
 
 body main {

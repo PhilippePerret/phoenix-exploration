@@ -79,7 +79,7 @@ config :phoenix_markdown, :earmark, %{
   }
 
 # --- Pour mon markdown à moi ---
-config :phoenix, :template_engines, mmd: MyMarkdown.Engine
+config :phoenix, :template_engines, mmd: PPMarkdown.Engine
 
 
 # Import environment specific config. This must remain at the bottom

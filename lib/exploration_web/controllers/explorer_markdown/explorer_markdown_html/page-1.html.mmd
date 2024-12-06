@@ -1,6 +1,60 @@
-# Exploration de… MARKDOWN (Package)
+# Exploration de… MARKDOWN<br />Création d’un package pour Phoenix/elixir
 
-Dans cette application, je vais donc tenter de produire un package pour markdown qui soit un peu plus performant que la package actuel.
+Dans cette application, je vais donc aller jusqu’à la création d’une extension (ou package, ou dépendance, c’est selon) pour traiter les fichiers markdown, quelque chose de plus étendu que le package [phoenix-markdown]() qui va me servir néanmoins d’exemple.
+
+### Par extension de fichier
+
+Je veux que ce soit, comme phoenix-markdown, un *moteur de rendu*, c’est-à-dire qu’il suffise d’utiliser une certaine extension de fichier pour que le fichier soit traité avec ce moteur de rendu. En l’occurrence, il s’agira de l’extension path(.mmd).
+
+> Est-ce que ça ne fait pas confusion avec « multi-markdown » ?… Est-ce qu’il ne vaudrait pas mieux path(.ppmd) même si c’est un peu long ?
+
+J’ai remarqué comment le définir très simplement dans path(config/config.ex) :
+
+~~~elixir
+config :mon_app, :template_engines, mmd: MonMoteur.Engine
+~~~
+
+### Dépendances
+
+Comme je vais partir de phoenix-markdown, j’ajoute cette dépendance ainsi que *:earmak* (utile aussi, mais je ne sais pas encore pourquoi) à path(mix.ex) :
+
+~~~elixir
+{:phoenix_markdown, "~> 1.0"},
+{:earmark, "~> 1.4"},
+~~~
+
+Je vais utiliser [markup](https://github.com/elixir-makeup/makeup/) et [markup-elixir](https://github.com/elixir-makeup/makeup_elixir) pour la colorisation syntaxique, il faut donc que j’ajouter ces dépendances à path(mix.ex) :
+
+~~~elixir
+{:makeup, "1.2.1"},
+{:makeup_elixir, "~> 0.14.0"}
+~~~
+
+J’ai aussi besoin d’un fichier CSS qui définira les couleurs. J’ai choisi path(perldoc) que j’aime bien, avec peu de contraste. J’ai du le modifier un peu pour qu’il contienne tout. J’ai placé le fichier dans path(assets/css/highlight/perldoc.css) et je l'ai chargé avec le code suivant dans mon path(assets/css/app.css) :
+
+~~~css
+@import "highlight/perldoc.css";
+~~~
+
+Ce fichier, à l’heure où vous lisez ces lignes, est très exactement :
+
+load_as_code(assets/css/highlight/perldoc.css)
+
+
+Voilà pour les dépendances pour le moment.
+
+### Installation
+
+Comme je ne veux pas faire de dépendance pour le moment, je crée juste un dossier dédié dans mon dossier path(lib/exploration_web/components/) qui aura pour nom path(pp_markdown_1.0) (« pp » étant mes initiales) et dans lequel je mettrai tous mes fichiers.
+
+> J'ajoute la version à la fin du nom du dossier parce que je me sers de ce moteur dans au moins deux applications en ce moment (LdQ et Exploration) et je risque de la bouger dans l'une ou dans l'autre. Donc il faut toujours que je sache quelle est la dernière version j'utilise. Pour le savoir, dès que je fais une modification, j'incrémente la version (je passe par exemple de "3.2" à "3.3"). Lorsque je passe à l'autre application, je peux vérifier que j'ai bien la dernière version.
+
+Mon module s’appellera **PPMarkdown**.
+
+Je commence par mettre dans ce dossier un fichier path(highlighter.ex) que j’ai récupéré dans [nimble-publisher][1] (un autre projet de [José Valim][2], le créateur du langage Elixir).
+
+
+### Les moteurs de rendu
 
 Dans un premier temps, je voudrais m'intéresser aux *moteurs de rendu* (*Template Engines*) qui permettre de traiter les vues.
 
@@ -8,8 +62,8 @@ Dans un premier temps, je voudrais m'intéresser aux *moteurs de rendu* (*Templa
 
 Après consultation de la documentation sur les moteurs de rendus, je crée le fichier path(lib/exploration_web/controllers/my_markdown_engin.ex) dans lequel je place :
 
-~~~
-defmodule MyMarkdown.Engine do
+~~~elixir
+defmodule PPMarkdown.Engine do
   @behaviour Phoenix.Template.Engine
 
   # Cette méthode est la seule obligatoire
@@ -30,7 +84,7 @@ defmodule MyMarkdown.Engine do
 
   # Méthode principale de traitement du code
   defp my_as_html(code, options) do
-    "<p>Je vais transformer le code « #{code} »</p>"
+    "<p>Je vais transformer le code « #{code} »</p>"
   end
 
 end 
@@ -40,7 +94,7 @@ Maintenant, je vais dire à mon application que les fichiers `.mmd` doivent util
 
 J'ajoute donc à path(config/config.ex) :
 
-~~~
+~~~elixir
 # in config/config.ex
 
 ...
@@ -50,15 +104,21 @@ config :phoenix, :template_engines, mmd: MyMarkdown.Engine
 ...
 ~~~
 
-Et je l'essaie sur ma page [*explorer_markdown_html/page-2.html.mmd*](<%= ~p"/explorer/markdown/?ipage=2" %>) (revenir en cliquant sur le bouton « Retour en arrière » du navigateur).
+Et je l'essaie sur ma page [explorer_markdown_html/page-2.html.mmd](<%= ~p"/explorer/markdown/?ipage=2" %>) (revenir en cliquant sur le bouton « Retour en arrière » du navigateur).
 
 Bingo ! 🥳 Ça fonctionne ! Je suis bien passé par le moteur de rendu et je peux maintenant traiter le code à ma guise.
 
 D'abord, il faut que je règle le problème des balises HTML qui se mettent en dur.
 
-J'obtiens le résultat voulu en ajoutant `|> EEx.compile_string(engine: Phoenix.HTML.Engine, file: path, line: 1)` comme dans le package markdown. Mon code devient :
+J'obtiens le résultat voulu en ajoutant :
 
+~~~elixir
+|> EEx.compile_string(engine: Phoenix.HTML.Engine, file: path, line: 1)
 ~~~
+
+… comme dans le package markdown. Mon code devient :
+
+~~~elixir
 def compile(path, name) do
 
   # Plus tard, on pourra définir des options
@@ -79,7 +139,7 @@ end
 
 Pour garder les traitements markdown de base, j'ajoute la ligne de traitement :
 
-~~~
+~~~elixir
 path
 |> File.read!()  
 |> Earmark.as_html!(earmark_options()) # <=== +
@@ -119,5 +179,8 @@ end
 
 Je veux pouvoir traiter les codes `<.fonction ...>`.
 
-
 <.link_next_page index=2 />
+
+
+[1]: https://github.com/dashbitco/nimble_publisher/tree/master
+[2]: https://pl.linkedin.com/in/josevalim
