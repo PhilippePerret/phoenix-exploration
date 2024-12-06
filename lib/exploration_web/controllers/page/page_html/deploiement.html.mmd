@@ -12,7 +12,7 @@ Cette page décrit tout ce que j'ai fait pour déployer cette application Phoeni
     * à l'adresse « www.atelier-icare.net/phoenix-exploration »,
     * dans _configuration_, je choisis « _Elixir_ »,
     * je mets en _commande_ 
-        `/home/icare/www/phoenix-exploration/_build/prod/rel/exploration/bin/exploration start`,
+        path(/home/icare/www/phoenix-exploration/_build/prod/rel/exploration/bin/exploration start),
     * je mets en _répertoire de travail_ « www/phoenix-exploration/ »,
     * en console, pour obtenir une *Secret Key Base*, je joue
         `mix phx.gen.secret` ,
@@ -58,7 +58,7 @@ Cette page décrit tout ce que j'ai fait pour déployer cette application Phoeni
 
       ~~~
 
-    * Dans `config/prod.exs`, à la place de :
+    * Dans path(config/prod.exs), à la place de :
       
       ~~~
       ...
@@ -79,7 +79,7 @@ Cette page décrit tout ce que j'ai fait pour déployer cette application Phoeni
       ~~~
 
       > Noter notamment le `path` qu'il faut adapter à l'application.
-    * dans `config/runtime.exs`, à la place de :
+    * dans path(config/runtime.exs), à la place de :
 
       ~~~
       host = System.get_env("PHX_HOST") || "example.com"
@@ -117,11 +117,11 @@ Cette page décrit tout ce que j'ai fait pour déployer cette application Phoeni
 
     C'est bon ! Normalement, c'est déployé…
 1. Je pourrais (peut-être) jouer `MIX_ENV=prod mix phx.server` pour démarrer le site en production, mais sur Alwaysdata, je vais plutôt dans mon tableau de bord, rubrique « Sites » et je clique sur le bouton à droite pour démarrer le site d'exploration de Phoenix.
-1. Et je me rends à l'adresse `https://www.atelier-icare.net/phoenix-exploration/`.
+1. Et je me rends à l'adresse path(https://www.atelier-icare.net/phoenix-exploration/).
 
     Et ça ne fonctionne pas…
 
-1. ChatGPT me dit d'ajouter dans `mix.exs` :
+1. ChatGPT me dit d'ajouter dans path(mix.exs) :
 
     ~~~
     def project do
@@ -136,10 +136,10 @@ Cette page décrit tout ce que j'ai fait pour déployer cette application Phoeni
       ]
     ~~~
 
-1. J'ajoute un `<base href={~p"/"}>` dans le `<head>` de `root.html.heex`.
+1. J'ajoute un `<base href={~p"/"}>` dans le `<head>` de path(root.html.heex).
 1. Puis je joue `MIX_ENV=prod mix release`.
 
-    => Et je me retrouve encore avec le même erreur, un `GET "/phoenix-exploration"` qui n'est pas défini, comme si l'application était lancée depuis `www.atelier-icare.net` alors qu'elle est lancée depuis `www.atelier-icare.net/exploration`. VOIR CI-DESSOUS.
+    => Et je me retrouve encore avec le même erreur, un `GET "/phoenix-exploration"` qui n'est pas défini, comme si l'application était lancée depuis path(www.atelier-icare.net) alors qu'elle est lancée depuis path(www.atelier-icare.net/exploration). VOIR CI-DESSOUS.
 
 1. Car là, **il ne faut pas oublier, sur ALWAYSDATA, de cocher la case "Exclure le chemin" dans l'onglet "AVANCÉ"** des réglages de l'application.
 1. Je coche donc la case "Exclure le chemin" et je valide.
@@ -154,7 +154,7 @@ Tous les sites parlent du déploiement mais jamais… de l'actualisation du site
 
 Pour le moment, lorsque je dois actualiser l'application, je procède ainsi :
 
-1. Je change le numéro de version dans `mix.exs`. En fonction de l'importance de l'actualisation, je change le premier (actualisation majeure), le seconde (actualisation mineure) ou le troisième (juste une petite correction).
+1. Je change le numéro de version dans path(mix.exs). En fonction de l'importance de l'actualisation, je change le premier (actualisation majeure), le seconde (actualisation mineure) ou le troisième (juste une petite correction).
 1. J'actualise tous les fichiers distant (personnellement, j'utilise [le package SFTP](https://codexns.io/products/sftp_for_sublime) de Sublime Text, mais je viens de passer à Visual Code Studio donc je trouverai une solution pour cet IDE bientôt — pour le moment, il ne semble exister une solution que pour du FTP, pas du FTP sécurisé).
 2. Je rejoins mon hébergement par SSH (`ssh <username>@ssh-<app>.alwaysdata.net`) avec une clé RSA qui me dispense d'entrer des informations d'identification.
 3. Je rejoins mon dossier (par exemple, pour cette application _Exploration_, je fais `cd www/phoenix-exploration`).
