@@ -130,6 +130,49 @@ def application do
 end
 
 ~~~
+<a name="problemeroute"></a>
+
+### Problèmes de route ou de chemin ?
+
+Mais alors que je me débats déjà avec ces problèmes, j’en rencontre d’autres avec les href et sources qui ne sont pas bons. Mon problème — que je dois absolument résoudre — vient du fait que mon application se trouve dans un dossier (alors que tous les exemples qui sont montrés concernent une application à la racine.
+
+Au départ, je pensais résoudre le problème avec un :
+
+~~~html
+<base href={~p"/"} />
+~~~
+
+… sauf que ça ne fonctionne pas avec les routes que je mets en dur.
+
+La solution finale qui fonctionne consiste à utiliser toujours `~p"/"` en préfixe, qui contiendra toujours le nom du dossier de l’application.
+
+Donc, par exemple, pour l’image du logo dans le fichier path(root.html.heex) j’utilise : 
+
+~~~html 
+<img src={(~p"/") <> "images/logo.svg"}
+~~~
+
+Pour les routes dynamiques, par exemple celles vers les pages suivantes je fais : 
+
+~~~elixir
+defp href_next_page(projet, page_index)
+	~p{"/explorer"} <> "#{projet}?ipage=#{page_index + 1}"
+	# => "/phoenix-exploration/explorer/tasker/?ipage=2
+end
+~~~
+
+Bien sûr, pour que la tournure `~p{"/explorer"}` fonctionne il faut que cette route existe. Mais si elle n’existait pas, on pourrait faire tout simplement la même chose qu’avec le logo ci-dessus :
+
+~~~elixir
+defp href_next_page(projet, page_index)
+	~p{"/"} <> "explorer/#{projet}?ipage=#{page_index + 1}"
+	# => "/phoenix-exploration/explorer/tasker/?ipage=2
+end
+~~~
+
+Bon… parfois je dois mettre path(/route) et d’autres fois path(route) mais bon, ça fonctionne. Il semblerait que pour les images, ne il faudrait pas de « / » tandis que pour les routes vers des pages, il en faudrait.
+
+### Reprise du développement du traitement de markdown
 
 
 
