@@ -1,3 +1,4 @@
+.DS_Store
 
 # Ignorer le fichier qui sert à copier tout sur icare
 sftp-config.json
