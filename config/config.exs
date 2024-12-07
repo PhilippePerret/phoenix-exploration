@@ -70,16 +70,13 @@ config :logger, :console,
 config :phoenix, :json_library, Jason
 
 # --- Pour Markdown ---
-config :phoenix, :template_engines, md: PhoenixMarkdown.Engine
-config :phoenix_markdown, :server_tags, :all
-config :phoenix_markdown, :earmark, %{
-    gfm: true,
-    smartypants: false,
-    breaks: true
-  }
+# config :phoenix, :template_engines, md: PhoenixMarkdown.Engine
 
 # --- Pour mon markdown à moi ---
 config :phoenix, :template_engines, mmd: PPMarkdown.Engine
+config :phoenix, :template_engines, md: PPMarkdown.Engine
+config :pp_markdown, :server_tags, :all
+config :pp_markdown, :earmark, %{gfm: true, smartypants: false, breaks: true}
 config :pp_markdown, :table_vars, %{
   app_name: "Phoenix-Exploration"
 }

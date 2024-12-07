@@ -1,0 +1,58 @@
+<%= raw @titre %>
+<%= raw link_other_pages(@page_index, @projet) %>
+
+### Implémentation des tests
+
+J'ai déjà fait quelques tests en Elixir avec Phoenix, mais je dois reprendre tout car je ne sais plus rien.
+
+Déjà il faut que je crée mon dossier path(test) avec à l’intérieur le fichier path(test/test_helper.exs) que je copie simplement de mon application.
+
+> Mais en fait, ce fichier ne contient que le code `ExUnit.start()`
+
+La base d’un test, ensuite, d’après [ExUnit](https://hexdocs.pm/ex_unit/ExUnit.html), c’est :
+
+~~~elixir
+defmodule MonModuleDeTest do
+	use ExUnit.Case, async: true
+	
+	test "Mon test" do
+		assert true
+	end
+end
+~~~
+
+Pour le moment, je vais tester seulement ce qui rentre et sort de `PPMarkdown.compile` :
+
+~~~elixir
+defmodule PPMarkdownTest do
+	use ExUnit.Case, async: true
+	
+	test "un simple paragraphe" do
+		texte = "Un simple paragraphe"
+		expected = "<p>Un simple paragraphe</p>"
+		actual = PPMarkdown.compile(texte)
+		assert actual == expected
+	end
+
+end 
+~~~
+
+
+
+
+
+
+
+### Reprise du développement de Markdown
+
+Mais d’abord, je voudrais travailler ma dépendance directement dans mon application Exploration, sans avoir à l’actualiser dans GitHub. ChatGPT m’indique comme faire. Il suffit, dans dans les deps de path(mix.exs) que je mette :
+
+~~~elixir
+{:pp_markdown, path: "chemin/vers/mon/dossier/local"},
+~~~
+
+… et normalement le tour est joué.
+
+
+
+<%= raw link_other_pages(@page_index, @projet) %>

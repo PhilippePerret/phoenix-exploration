@@ -70,8 +70,37 @@ J’ajoute aussi par prudence un `override: true` dans ma dépendance de `earmar
 
 Cette fois, je recharge les dépendances, je lance le serveur… et tout passe comme un charme ! 😎👍
 
+### Suppression complète de phoenix-markdown
 
+Malgré ses bons et loyaux services, je vais tenter de me débarrasser maintenant de la dépendance phoenix-markdown. Il faut que je pense cependant à voir ce que mon app définit pour lui dans mes configurations.
 
+En fait, il faut que dans mon *Engine* je ne fasse plus appelle à `:phoenix_markdown` dans les appels à la configuration et que dans path(config.exs) je fasse pareil.
 
+Comme j’ai oublié de gitignorer les dossier path(_build) et path(deps), je préfère refaire complètement mon dépôt github.
+
+…
+
+Sauf que maintenant, en rechargeant j’obtiens l’erreur :
+
+~~~
+* Getting pp_markdown (https://github.com/PhilippePerret/pp_markdown.git)
+...
+fatal: reference is not a tree: 9145a86b8cde0a64c9cc780623846e1b29c3c41e
+** (Mix) Command "git --git-dir=.git checkout --quiet 9145a86b8cde0a64c9cc780623846e1b29c3c41e" failed
+~~~
+
+En fait, c’est path(mix.lock) qui retient les informations du dépôt et comme je viens de le refaire, il ne correspond plus. J’`rm mix.lock` (pour le détruire, donc), je relance… et ça passe comme un charme 🥳.
+
+Et ma pseudo-dépendance fonctionne comme un charme !
+
+Ben oui, mine de rien, je viens de créer ma première pseudo-dépendance ! 🥂 Je suis bientôt prêt à en créer peut-être une vraie. Mais il faudra commencer par tester celle-ci avant de la mettre à disposition.
+
+### Colorisation syntaxique
+
+Malgré mes déboires avec la colorisation syntaxique, je n’ai pas renoncé à cette fonctionnalité vraiment trop pratique. Je voudrais réessayer de l’utiliser, mais en faisant appel au « vrai » *colorateur*. 
+
+Bon… j’ai réussi à faire passer *Makeup* et *makeup_elixir* (avec plein d’erreur), l’application démarre bien mais je me retrouve avec une page pas bonne du tout… En fait elle se trouve dans un `<pre><code>...</code></pre>` et apparait donc entière en dur…
+
+Pour la suite, je vais implémenter les tests afin d’être sûr de ce qui sort de ce moteur de rendu.
 
 <%= raw link_other_pages(@page_index, @projet) %>
