@@ -1,7 +1,5 @@
 defmodule Exploration.MyViewHelpers do
 
-  use Phoenix.VerifiedRoutes, endpoint: ExplorationWeb.Endpoint, router: ExplorationWeb.Router
-
   def link_other_pages(page_index, projet) do
     []
     |> Enum.concat(["<div class=\"nav-prev-next-pages\">"])
@@ -34,9 +32,8 @@ defmodule Exploration.MyViewHelpers do
   end
 
   defp next_page_link(page_index, projet) do
-    lien = ~p"/explorer/#{projet}"
     """
-    <span class="page-next"><a href="#{lien}?ipage=#{page_index + 1}">Page suivante →</a></span>
+    <span class="page-next"><a href="/explorer/#{projet}?ipage=#{page_index + 1}">Page suivante →</a></span>
     """
   end
 
