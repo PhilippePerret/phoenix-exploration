@@ -1,7 +1,77 @@
 <%= raw @titre %>
-
 <%= raw link_other_pages(@page_index, @projet) %>
 
-Le contenu de la page.
+Je vais essayer de faire de mon *pp_markdown* une application pour pouvoir me passer totalement de *phoenix_markdown* qui n'est pas à jour et qui m'oblige à passer par lui pour définir des variables (notamment la table `@table_vars`).
+
+J'essaie de crée un fichier définissant une application dans le dossier path(pp_markdown_1.1).
+
+Ça ne fonctionne pas comme ça, mais j’ai trouvé dans la documentation comment utiliser une dépendance sans pour autant créer vraiment une dépendance. Il suffit que je sauve *pp_markdown* sur github et que je mets dans les `depts` de mon path(mix.ex) :
+
+~~~elixir
+depts = [
+	...
+	{
+		:pp_markdown, 
+		git: 
+			"https://github.com/PhilippePerret/pp_markdown.git"
+	}
+]
+~~~
+
+### Création du dépôt
+
+Donc je vais sortir mon dossier de mon explorateur et l’enregistrer sur git.
+
+…
+
+J’ai créé le dépôt avec la même architecture que path(phoenix_markdown) :
+
+~~~
+pp_markdown.git
+		|- lib/
+				|- pp_markdown.ex
+				|- pp_markdown/
+						|-> engine.ex
+		|- LICENSE
+		|- mix.exs
+		|- README.md
+~~~
+
+Et j’ai ajouté la dépendance ci-dessus au path(mix.exs) de mon application exploration courante.
+
+Allez !… Je tente d’actualiser les dépendances.
+
+…
+
+Bingo ! 🥳 Il a bien chargé mon dossier depuis mon compte github.
+
+### Configuration de l’application
+
+Je vais maintenant voir si l’application `PPMarkdown` est maintenant connue de mon app et si `:pp_markdown` est sa marque.
+
+…
+
+Malheureusement, ça ne suffit pas, il en faut un peu plus. Je vais au moins créer le fichier path(mix.lock). Dans mon dossier path(pp_markdown) je joue :
+
+~~~bash
+mix deps.get
+mix compile
+~~~
+
+Je n’oublie pas de faire un fichier path(.gitignore) pour ne pas verser dans mon compte gitub les dossier path(_build) et path(deps) et je `git commit` l’ensemble.
+
+J’ajoute aussi par prudence un `override: true` dans ma dépendance de `earmark` pour que ma version dans l’application surclasse la version définie dans la dépendance :
+
+~~~elixir
+# in mix.exs
+
+{:earmark, "~> 1.4", override: true},
+~~~
+
+Cette fois, je recharge les dépendances, je lance le serveur… et tout passe comme un charme ! 😎👍
+
+
+
+
 
 <%= raw link_other_pages(@page_index, @projet) %>

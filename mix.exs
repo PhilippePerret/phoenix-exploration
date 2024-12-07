@@ -55,7 +55,10 @@ defmodule Exploration.MixProject do
        compile: false,
        depth: 1},
       {:phoenix_markdown, "~> 1.0"},
-      {:earmark, "~> 1.4"},
+      {:pp_markdown, git: "https://github.com/PhilippePerret/pp_markdown.git"},
+      # {:pp_markdown, git: "https://github.com/PhilippePerret/pp_markdown/blob/main/pp_markdown-0.1.0.tar"},
+      
+      {:earmark, "~> 1.4", override: true},
       # {:makeup, "1.0.0"},
       # {:makeup_elixir, "0.14.0"},
       {:swoosh, "~> 1.5"},

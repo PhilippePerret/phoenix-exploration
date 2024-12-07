@@ -24,7 +24,6 @@ defmodule Exploration.MyViewHelpers do
 
   defp add_next_page_if_exist(liste, page_index, projet) do
     filepath = "lib/exploration_web/controllers/explorer_#{projet}/explorer_#{projet}_html/page-#{page_index + 1}.html.mmd"
-    |> IO.inspect(label: "\nFilepath")
     if File.exists?(filepath) do
       Enum.concat(liste, [next_page_link(page_index, projet)])
     else
