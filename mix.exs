@@ -26,7 +26,7 @@ defmodule Exploration.MixProject do
   def application do
     [
       mod: {Exploration.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:logger, :runtime_tools, :pp_markdown]
     ]
   end
 
@@ -54,10 +54,10 @@ defmodule Exploration.MixProject do
        app: false,
        compile: false,
        depth: 1},
-      {:pp_markdown, git: "https://github.com/PhilippePerret/pp_markdown.git"},
+      # {:pp_markdown, git: "https://github.com/PhilippePerret/pp_markdown.git"},
+      # {:pp_markdown, path: "../pp_markdown"},
+      {:pp_markdown, path: "apps/pp_markdown"}, # dépendance locale
       {:earmark, "~> 1.4", override: true},
-      {:makeup, "1.2.1"},
-      {:makeup_elixir, "0.14.0"},
       {:swoosh, "~> 1.5"},
       {:finch, "~> 0.13"},
       {:telemetry_metrics, "~> 1.0"},
