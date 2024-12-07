@@ -12,25 +12,21 @@
 defmodule PPMarkdown.Engine do
   @behaviour Phoenix.Template.Engine
 
-  # Ça râle un peu, mais ça passe
-  @table_vars Application.get_env(:phoenix_markdown, :table_vars) || %{}
-  # Devra être remplacé par la ligne suivante lorsque my_markdown (ou autre meilleur
-  # nom sera vraiment une dépendance)
-  # @table_vars Application.get_env(:my_markdown, :table_vars)
+  @table_vars Application.compile_env(:phoenix_markdown, :table_vars, %{})
 
-  # use Phoenix.Component
+  # alias PPMarkdown.Highlighter, as: Lighter
 
-  alias PPMarkdown.Highlighter, as: Lighter
-
-  # TODO Comment le définir en configuration ?
+  # TODO Le définir en configuration ?
   @load_external_file_options %{source: true}
+
+
 
   def compile(path, name) do
 
     # Plus tard, on pourra définir des options
     options = %{}
 
-    options_lighter = []
+    # options_lighter = []
     options_final   = %{}
 
     path
@@ -39,11 +35,9 @@ defmodule PPMarkdown.Engine do
     |> Earmark.as_html!(earmark_options())
     |> handle_smart_tags(path, name)
     |> mmd_transformations(options)
-    |> Lighter.highlight(options_lighter)
+    # |> Lighter.highlight(options_lighter)
     |> load_external_code()
-    |> IO.inspect(label: "\nAVANT FINAL:")
     |> final_transformations(options_final)
-    |> IO.inspect(label: "\nAPRÈS FINAL:")
     |> EEx.compile_string(engine: Phoenix.HTML.Engine, file: path, line: 1)
   end
 
@@ -69,21 +63,12 @@ defmodule PPMarkdown.Engine do
 
   defp protege_elixir_tags_in(code, regex, _options) do
     code
-    # |> String.replace(@reg_code_block, "[CODE SUPPRIMÉ]")
     |> String.replace(regex, fn resultat ->
       resultat
       |> String.replace(@reg_elixir_tag, @remp_elixir_tag)
     end)
   end
 
-  # defp correct_exilir_tag_in(resultat) do
-  #   blockcode = Enum.fetch(resultat, 1)
-  #   IO.inspect(blockcode, label: "\nblockcode:")
-  #   # blockcode
-
-  #   "[CODE SUPPRIMÉ]"
-  # end
-  
 
   @regex_load ~r/load\((.*)\)/U
   @regex_load_as_code ~r/load_as_code\((.*)\)/U
@@ -128,8 +113,8 @@ defmodule PPMarkdown.Engine do
   end
 
   defp transforme_paths(code) do
-    Regex.replace(~r"path\((.*)\)"U, code, "<path>\\1</path>")
-    # |> IO.inspect(label: "après transformation de path")
+    code
+    |> String.replace(~r/path\((.*)\)/U, "<path>\\1</path>")
   end
 
   
@@ -226,7 +211,7 @@ defmodule PPMarkdown.Engine do
 
   # sadly there is no is_regex guard...
   defp only?(regex, path, _) do
-    if Regex.regex?(regex) do
+    if Kernel.is_struct(regex, Regex) do
       String.match?(path, regex)
     else
       raise ArgumentError,
@@ -250,7 +235,7 @@ defmodule PPMarkdown.Engine do
 
   # sadly there is no is_regex guard...
   defp except?(regex, path, _) do
-    if Regex.regex?(regex) do
+    if Kernel.is_struct(regex, Regex) do
       !String.match?(path, regex)
     else
       raise ArgumentError,

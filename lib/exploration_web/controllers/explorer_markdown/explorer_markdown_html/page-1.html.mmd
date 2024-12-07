@@ -1,7 +1,7 @@
 <%= raw @titre %>
 <%= raw link_other_pages(@page_index, @projet) %>
 
-Dans cette application, je vais donc aller jusqu’à la création d’une extension (ou package, ou dépendance, c’est selon) pour traiter les fichiers markdown, quelque chose de plus étendu que le package [phoenix-markdown]() qui va me servir néanmoins d’exemple.
+Dans cette application, je vais donc aller jusqu’à la création d’une extension (ou package, ou dépendance, c’est selon) pour traiter les fichiers markdown, quelque chose de plus étendu que le package [phoenix-markdown][3] qui va me servir néanmoins d’exemple.
 
 ### Par extension de fichier
 
@@ -61,7 +61,7 @@ Puisque je veux que ça fonctionne en mettant en configuration :
 config :mon_app, :template_engines, mmd: PPMarkdown.Engine
 ~~~
 
-… pour que dès que l’on a un fichier path(mon_fichier.html.mmd) (donc où l’extension est path(.mmd) le fichier soit traité par mon moteur de rendu `PPMarkdown.Engine`.
+… pour que dès que l’on a un fichier path(mon_fichier.html.mmd) (donc où l’extension est path(.mmd) le fichier soit traité par mon moteur de rendu `PPMarkdown.Engine`).
 
 ### Création d'un engin simple
 
@@ -161,3 +161,4 @@ Et comme je veux utiliser tous les traitements de PhoenixMarkdown, mais que je n
 
 [1]: https://github.com/dashbitco/nimble_publisher/tree/master
 [2]: https://pl.linkedin.com/in/josevalim
+[3]: https://github.com/boydm/phoenix_markdown
