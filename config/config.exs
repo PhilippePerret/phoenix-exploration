@@ -73,10 +73,15 @@ config :phoenix, :json_library, Jason
 # config :phoenix, :template_engines, md: PhoenixMarkdown.Engine
 
 # --- Pour mon markdown à moi ---
-config :phoenix, :template_engines, mmd: PPMarkdown.Engine
-config :phoenix, :template_engines, md: PPMarkdown.Engine
-config :pp_markdown, :server_tags, :all
-config :pp_markdown, :earmark, %{gfm: true, smartypants: false, breaks: true}
+# config :phoenix, :template_engines, mmd: PPMarkdown.Engine
+config :phoenix, :template_engines, md: PPMarkdown.Engine, mmd: PPMarkdown.Engine
+config :pp_markdown, :options, %{
+  gfm: true, 
+  smartypants: false, 
+  breaks: true, 
+  server_tags: :all,
+  compact_output: true
+}
 config :pp_markdown, :table_vars, %{
   app_name: "Phoenix-Exploration"
 }

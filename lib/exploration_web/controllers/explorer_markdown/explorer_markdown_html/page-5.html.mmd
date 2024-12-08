@@ -1,0 +1,91 @@
+<%= raw @titre %>
+<%= raw link_other_pages(@page_index, @projet) %>
+
+### Reprise du développement du traitement de markdown
+
+Je vais poursuivre les tests entamer dans la section précédente.
+
+D'abord, pour les rendre confortable, j'ouvre un Terminal dans mon dossier p(pp_markdown) et je joue `iex -S mix run` ce qui lance l'application et va me permettre d’interagir avec elle. Par exemple, je vais pouvoir faire `iex> PPMarkdown.Engine.compile("path/de/mon/fichier.mmd")` pour tester la ou les méthodes en direct.
+
+Chaque fois que je changerai mon code je jouerai `iex> recompile()` pour… recompiler le code.
+
+`PPMarkdown.Engine.compile/2` est la méthode qui je veux essentiellement tester. Je voudrais que les tests soient aussi simples que :
+
+~~~elixir
+
+test "un test particulier" do
+  actual = get_output_of("mon_fichier.mmd")
+  assert actual == expected("""
+  Le code attendu
+  """)
+end
+~~~
+
+Je vais utiliser la méthode `expected/1` parce que le code que je fournis, en *heredoc*, contient forcément des retours chariots que je ne désire pas.
+
+D’autre part, comme je ne veux pas ré-implémenter mes méthodes `get_output_of/1` et `expected/1` dans chaque fichier test, je vais les mettre dans un module `TestHelper` dans mon fichier p(test/test_helper.exs). Et je ferai un `alias TestHelper, as: T` en haut de chaque fichier pour pouvoir utiliser, au final :
+
+~~~elixir
+
+alias TestHelper, as: T
+
+test "un test particulier" do
+  actual = T.get_output_of("mon_fichier.mmd")
+  assert actual == T.expected("""
+  Le code attendu
+  """)
+end
+~~~
+
+J'implémente ces deux méthodes de cette façon :
+
+~~~elixir
+# in test/test_helper.exs
+
+def get_output_of(filename, options) do
+  if options do
+  	Application.put_env(:pp_markdown, :options, options)
+  end
+  {:__block__, _, liste} = Engine.compile(
+  	"test/fixtures/textes/#{filename}", filename)
+  Keyword.get(liste, :safe)
+end
+def get_output_of(filename) do
+  get_output_of(filename, nil)
+end
+
+def expected(string) do
+  string = string
+  |> String.replace("\n", "")
+  [string]
+end
+
+~~~
+
+Et je veux implémenter le nouveau fonctionnement, en séparant dès le départ les blocs de code (entre <%= "~" <> "~~ ... ~~" <> "~" %> du reste, pour deux raisons :
+
+* pour pouvoir leur appliquer `Makeup.highlight` (qui attend seulement un bloc de code),
+* pour leur appliquer un traitement minimal des autres traitement (pas de traiter des `<% ... %>`, des marques d’italique, etc.).
+
+Pour les dispatcher, j’utilise une fonction `dispatch_section/1` implémentée ainsi :
+
+~~~elixir
+defp dispatch_sections(code) do
+  {blocks, letexte} =
+  Regex.scan(@reg_code_block, code)
+  |> Enum.with_index(0)
+  |> Enum.reduce({[], code}, fn {matches, index}, {blocks, acc} -> 
+    block = hd(matches)
+    {blocks ++ [block], String.replace(acc, block, "__BLOCKCODE#{index}__")}
+  end)
+  %{marked_text: letexte, original_text: code, blocks: blocks}
+end
+~~~
+
+
+
+
+
+
+
+<%= raw link_other_pages(@page_index, @projet) %>

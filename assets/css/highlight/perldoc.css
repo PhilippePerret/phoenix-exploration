@@ -1,10 +1,12 @@
 .makeup .hll { background-color: #ffffcc }
-.makeup  { 
-  background: #eeeedd; 
+pre.makeup code  { 
+  /* background: #eeeedd;  */
+  background-color: #ffffcc;
   color:black;
 }
 .makeup .c { color: #228B22 } /* Comment */
 .makeup .err { color: #a61717; background-color: #e3d2d2 } /* Error */
+.makeup .err { color: #a61717; background-color: transparent } /* Error */
 .makeup .k { color: #8B008B; font-weight: bold } /* Keyword */
 .makeup .ch { color: #228B22 } /* Comment.Hashbang */
 .makeup .cm { color: #228B22 } /* Comment.Multiline */
