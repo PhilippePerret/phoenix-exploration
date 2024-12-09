@@ -159,6 +159,4 @@ Pour le moment, lorsque je dois actualiser l'application, je procède ainsi :
 2. Je rejoins mon hébergement par SSH (`ssh <username>@ssh-<app>.alwaysdata.net`) avec une clé RSA qui me dispense d'entrer des informations d'identification.
 3. Je rejoins mon dossier (par exemple, pour cette application _Exploration_, je fais `cd www/phoenix-exploration`).
 4. Je demande une nouvelle release (`MIX_ENV=prod mix release`).
-5. Une fois qu'elle est faite, je rejoins mon tableau de bord, onglet « Sites » et je redémarre mon application.
-
-  > Peut-être que je pourrais redémarrer directement en SSH, il faudra que j'essaie, la prochaine fois.
+5. [En fait, cette opération n'a pas l'air nécessaire — peut-être quand il s'agit d'une nouvelle release] Une fois qu'elle est faite, je rejoins mon tableau de bord, onglet « Sites » et je redémarre mon application.
