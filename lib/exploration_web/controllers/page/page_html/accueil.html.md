@@ -10,7 +10,7 @@ Voilà ce que vous pouvez y trouver :
 
 [Application web LECTURE DE QUALITÉ, deuxième exploration](<%= ~p"/explorer/ldq" %>):
 :Seconde exploration, mais presque en parallèle de la précédente, d'une application grandeur nature. Beaucoup de tables jointes, traitement des mails, traitement des connexions nombreuses, nombreux algorithmes.
-:Sujets : traitement des rôles (users).
+:Sujets : traitement des rôles (users), gettext.
 
 [Package MARKDOWN](<%= ~p"/explorer/markdown" %>):
 :Cette quatrième application s'intéresse particulièrement à la fabrication d'une dépendance, ici pour améliorer la dépendence _phoenix-markdown_.

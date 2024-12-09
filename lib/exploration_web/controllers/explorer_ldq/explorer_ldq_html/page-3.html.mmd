@@ -1,0 +1,359 @@
+load(_entete)
+
+Non, je ne vais pas renoncer au LiveView, mais je vais procéder dans l’ordre et plus simple.
+
+### Identification
+
+D’abord, un livre ne pourra être soumis sans être identifié (ne serait-ce que pour pouvoir associer le livre à quelqu’un). Il faut donc que j’installe toute cette partie, grâce à la commande magic `mix phx.gen.auth`
+
+~~~elixir
+mix phx.gen.auth Compte User users
+~~~
+
+> Je le gère en LiveView (en confirmant la demande)
+
+Bon… en fait, je vais plutôt tout recommencer pour faire quelque chose de propre, parce que là, déjà, j’ai :
+
+* créé avec `Compte` au lieu de `Comptes`
+* crée tout au début un `Contenu` qui ne va me servir à rien,
+* crée déjà un `User`
+* et tout ce que j’ai fait entre temps…
+
+### Repartir à zéro
+
+Donc je vais repartir à zéro en gardant ce dossier pour récupérer les choses et notamment le fonctionnement avec Markdown qui me va bien.
+
+Ce sera donc ma `ldq-v2` :
+
+~~~bash
+mix phx.new ldq-v2 --app ldq --module LdQ --binary-id
+~~~
+
+Je ne charge pas les dépendances pour déjà ajouter celles qu’il me faut et puis installer tout de suite le contexte `Comptes` et `User`.
+
+Je refais cette fois sans me tromper (dans `ldq-v2`) :
+
+~~~bash
+mix phx.gen.auth Comptes User users
+~~~
+
+Non, je dois charger les dépendances avant. J’ajoute donc :
+
+~~~elixir
+# in mix.exs
+
+def deps do
+	...
+	{:phoenix_markdown, "~> 1.0"},
+  {:earmark, "~> 1.4"},
+
+~~~
+
+… et je `mix deps.get`.
+
+Et je `mix phx.gen.auth Comptes User users`.
+
+L’application me dit qu’après avoir migré, je pourrais :
+
+~~~document
+Once you are ready, visit "/users/register"
+to create your account and then access "/dev/mailbox" to
+see the account confirmation email.
+~~~
+
+Je `mix deps.get`. Et je `mix ecto.migrate`.
+
+Je fais un premier essai avant de déplacer tous les fichiers p(live/user...) dans un dossier pour ne pas encombrer le dossier p(live) et voir si ça marche encore quand même.
+
+je `mix phx.server` et je rejoins donc :
+p(http://localhost:4000/users/register)
+
+Tout fonctionne bien pour la création de mon compte.
+
+J’arrête le serveur et je détruis le dossier p(_build) et je déplace tous les fichiers p(live/user...) dans un dossier p(live/user_live/).
+
+Je `mix phx.server` ce qui recompile l’application. Je peux m’identifier et je peux créer un autre utilisateur donc tout semble bien se passer.
+
+### Github 
+
+Pour pouvoir essayer des choses et revenir facilement en arrière, je vais fonctionner avec github. Je crée donc l’application sur mon compte et j’`init` ce dossier.
+
+…
+
+Voilà c’est installé.
+
+### Voie sans issue et en travaux
+
+Pour ne pas avoir d’ennui avec les routes qui ne sont pas encore réglées, je vais faire un contrôleur provisoire qui va recevoir les routes quand elles n’ont pas encore de destination.
+
+Je crée donc le module :
+
+~~~elixir
+# in controllers/chantier/chantier_controller.ex
+
+defmodule LdQWeb.ChantierController do
+	use LdQWeb, :controller
+	
+	def voie_sans_issue(conn, _params) do
+		render(conn, :voie_sans_issue)
+	end
+	
+end
+~~~
+
+Je crée le module qui va définir où sont les pages :
+
+~~~elixir
+# in controllers/chantier/chantier_html.ex
+
+defmodule LdQWeb.ChantierHTML do
+	use LdQWeb, :html
+	
+	embed_templates "chantier_html/*"
+end
+~~~
+
+Et je crée une première page :
+
+~~~html
+<!-- 
+in ctrls/chantier/chantier_html/voie_sans_issue.html.heex
+-->
+
+<h1>Voie sans issue</h1>
+
+<p>Pour le moment, cette route ne conduit nulle part.</p>
+~~~
+
+… vers laquelle on va diriger toutes les routes sans destinations pour le moment.
+
+Comme j’avais déjà travaillé sur la mise en page, je reprends quelques éléments. Mais avant ça, je dois définir les routes qu’ils utilisent. C’est par exemple les liens principaux. J’ajoute donc :
+
+~~~elixir
+# in router.ex
+
+scope "/livres", LdQWeb do
+  pipe_through :browser
+
+	get "/", LdQ.ChantierController, :voie_sans_issue
+end
+~~~
+
+J’essaie cette première pour voir si elle va fonctionner en rejoignant l’adresse p(http://localhost:4000/livres). Ça fonctionne comme un charme. J’aimerais juste pouvoir afficher la route dans la page sans issue (et ajouter un panneau) et ajouter une page en travaux (avec un panneau).
+
+~~~elixir
+  def en_travaux(conn, _params) do
+    render(conn, :en_travaux, route: conn.request_path)
+  end
+~~~
+
+… et j’utilise simplement `@route` dans le message de la page.
+
+Je récupère les deux panneaux et je les mets dans le dossier p(priv/static/images/).
+
+Je `git commit`.
+
+### Premières routes
+
+Je peux maintenant créer les routes que j’ai déjà, qui ne conduisent encore nulle part. Je les trouve dans le fichier p(layouts.ex) qui définit les routes principales et je les crée.
+
+~~~elixir
+# in router.ex
+
+score "/livres", LdQWeb do
+	...
+	get "/choisir", ChantierController, :voie_sans_issue
+	get "/classement", ChantierController, :voie_sans_issue
+	get "/new", ChantierController, :voie_sans_issue
+	...
+end
+
+scope "/apropos", LdQWeb do
+
+	get "/faq", ChantierController, :voie_sans_issue
+  # get "/faq", AproposController, :faq
+end
+~~~
+
+> Noter ici le contrôleur `About` qui devra être créé. Et j’ai remplacé la route p(/presentation) par p(/apropos) qui est plus court.
+
+* tout le dossier p(ldq_web/components/layouts/)
+* l’élément  p(ldq_web/components/layouts.ex) (qui définit notamment les liens principaux)
+* le dossier des fonts p(priv/static/fonts)
+* le dossier des css p(assets/css) qui va remplacer le dossier actuel.
+
+Je `git commit` avant de passer à la suite.
+
+### Logo et entête
+
+Pendant la nuit j’ai vu l’entête et le logo du site. Je vais les recréer le plus proche possible.
+
+…
+
+Bon… ce n’est pas tout à fait ça, mais j’arrive à me rapprocher un peu du rêve.
+
+Je `git commit`.
+
+### Markdown
+
+Je remets en place le fonctionnement de markdown. J’avais déjà mis la dépendance, il me reste à régler les différents endroits. Je vais pour ça sur le site de [Phoenix Markdown](https://github.com/boydm/phoenix_markdown).
+
+J’ajoute `smartypants` pour ne pas traiter les guillemets. J’obtiens au final :
+
+~~~elixir
+# in config/config.ex
+
+config :phoenix, :template_engines, md: PhoenixMarkdown.Engine
+
+config :phoenix_markdown, :server_tags, :all
+
+config :phoenix_markdown, :earmark, %{
+    gfm: true,
+    smartypants: false,
+    breaks: true
+  }
+
+~~~
+
+> À nouveau je précise que ces codes ne sont plus ceux utilisés aujourd'hui.
+
+Et dans p(config/dev.ex) :
+
+~~~elixir
+config :ldq, LdQWeb.Endpoint,
+  live_reload: [
+    patterns: [
+      ~r"priv/static/(?!uploads/).*(js|css|png|jpeg|jpg|gif|svg)$",
+      ~r"priv/gettext/.*(po)$",
+      ~r"lib/ldq_web/(controllers|live|components)/.*(ex|heex)$",
+      ~r{web/templates/.*(eex|md)$} # <==== +
+    ]
+  ]
+
+~~~
+
+
+
+Maintenant je peux ramener les pages markdown que j’ai déjà préparées en markdown. Et le contrôleur `AproposController` (et `AproposHTML`) pour les gérer. J’ajoute aussi dans le nouveau dossier p(apropos/apropos_html/) dans lequel j’ai mis les fichiers markdown, le fichier p(manifeste.html.heex) (qui n’est pas en markdown car l’aspect est trop compliqué).
+
+…
+
+L’app se plait parce qu’il ne trouve pas les fonctions (ou helpers) `ldq_label` et compagnie. Ils sont en fait dans mon helper de vue, que je dois reprendre et recharger dans chaque module. C’est donc le fichier p(ldq_web/view_helpers.ex) et je dois l’importer dans le code template `:html` dans : 
+
+~~~elixir
+# in lib/ldq_web
+
+def :html do
+	...
+  # Mes helpers à moi (dans le module view_helpers.ex)
+  import LdQWeb.ViewHelpers
+
+~~~
+
+Je `git commit`.
+
+### Routes manquantes
+
+Avant de poursuivre, je vais ajouter toutes les routes manquantes signalées par le démarrage du serveur.
+
+### Page d’accueil sur manifeste
+
+Et pour retomber complètement sur mes pieds, je remets le manifeste comme page d’accueil. Je tiens compte du fait que cette page se trouve maintenant dans p(apropos/apropos_html).
+
+Il m’a fallu, dans p(router.ex), ajouter : 
+
+~~~elixir
+scope "/", LdQWeb do
+	...
+	get "/", AproposController, :manifeste
+end
+~~~
+
+… et :
+
+~~~elixir
+# in controllers/apropos/apropos_controller.ex
+
+def manifeste(conn, _params) do
+	render(conn, :manifeste)
+end
+	
+~~~
+
+… et tout marche comme un charme. Presque… car je n’ai plus le cadre autour de mon texte. J’ai tout simplement oublié de définir le layout à utiliser :
+
+~~~elixir
+# in controllers/apropos/apropos_controller.ex
+
+def manifeste(conn, _params) do
+	render(conn, :manifeste,
+		layout:{LdQWeb.Layouts, :as_page})
+end
+	
+~~~
+
+Et cette fois c’est parfait.
+
+### gettext
+
+Comme j’envisage déjà que l’application soit en français, mais que je veux qu’elle puisse devenir internationale et donc qu’elle commence par rester en anglais, je vais m’intéresser à `gettext` que je n’ai pas réussi à faire marcher jusqu’à présent. Je commence par consulter sa [documentation](https://hexdocs.pm/gettext/Gettext.html).
+
+1. Dans l’application, on met les textes localisés en paramètre de `gettext`. Par exemple `gettext("Hello world")`.
+2. On demande d’extraire tous ces textes avec `mix gettext.extract`.
+3. Tous les textes sont mis dans un fichier `.pot` dans le dossier `priv/gettext` (ici, comme c’est `gettext(...)` qui est utilisé, c’est mis dans le fichier `default.pot`, mais voir ci-dessous les autres utilisations).
+4. Je duplique ces fichiers dans les dossiers de langue en mettant l’extension à `.po` (les dossiers de langue sont sous la forme `<lang>/LC_MESSAGES/`).
+5. Je traduis les éléments à traduire.
+6. Je joue `mix gettext.merge priv/gettext` pour que les changements soient pris en compte.
+
+Pour que la langue soit définie, pour le moment, je la mets dans `ldq_web/gettext.ex` :
+
+~~~elixir
+use Gettext, otp_app: :ldq, default_locale: "fr"
+~~~
+
+> Noter que ça ne modifie pas le `Gettext.get_locale/0` qui continue de retourner `en`.
+>
+> À l’avenir, il faudra voir comment définir dynamiquement la langue.
+>
+> Il faudra aussi voir l’erreur de déprécation qui est encore produite mais que je n’arrive pas à résoudre.
+
+Pour mieux classer les messages, je peux utiliser plutôt `dgettext` (pour « domain gettext »). Si je fais par exemple `<%= dgettext("tech", "Arrival") %>` alors le `mix gettext.extract` fera un fichier p(tech.pot) contenant tous les mots du domaine `tech` qu’il suffira de traiter comme le fichier p(default.pot).
+
+Je lance un `mix gettext.extract` pour faire ma localisation et je remplis les fichiers.
+
+…
+
+Pour le voir tout de suite, il faut aussi que je traite les noms des boutons d’inscription, d’identification, etc. Je vais en profiter pour inaugurer un fichier p(ui.pot) en utilisant `dgettext("ui", "Log in")`.
+
+…
+
+Et ça marche comme un charme après avoir `mix gettext.merge priv/gettext`.
+
+Je `git commit` tout ça.
+
+### Bouton user
+
+Je voudrais reprendre le bouton utilisateur que j’avais fabriqué pour *Tasker* en suivant le tutoriel du « mentor Phoenix ».
+
+* Je copie-colle le css pour le triangle sur le côté,
+* je copie-colle le code html pour le bouton,
+* j’ajoute le fichier `ldq_web/components/layouts/app.ex` (avec la fonction `toogle_menu_avatar`,
+* je modifie bien tous les `TaskerWeb` en `LdQWeb` partout (même dans le `root.html.heex`),
+* je copie l’avatar par défaut dans le dossier `priv/static/images`,
+* je copie l’avatar en mettant l’adresse mail,
+* je change les noms des fichiers avatar pour utiliser le mail (c’est idiot d’utiliser l’ID de session,
+* je récupère les réglages de *Tailwind* pour utiliser des constantes couleurs pour parachever le tout en mettant mes nouvelles couleurs.
+
+Et j’en ai fini avec une première réinstallation complète de l’interface, qui fonctionne bien.
+
+### Petites corrections à effectuer
+
+Les modifications suivantes sont à effectuer avant de poursuivre.
+
+* mettre une police comme Arial en police pour les messages flash.
+* faire les caractères manquants de la police spéciale que j’ai utilisée pour le manifeste.
+* retravailler les menus principaux pour qu’ils soient moins voyants (plus petits)
+
+Je `git commit` à la fin.
+
+load(_pied_de_page)

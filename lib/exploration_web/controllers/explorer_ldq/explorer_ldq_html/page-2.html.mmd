@@ -1,0 +1,194 @@
+load(_entete)
+
+### Suite de la récupération des textes
+
+Pour les helpers, je récupère le fichier `controllers/view_helpers.ex` qui les contient (je change le nom du module) et j’ajoute cette ligne dans `controllers/ldq_web` pour qu’on puisse les utiliser :
+
+~~~elixir
+# in controllers/ldq_web.ex
+
+def html do
+	...
+  import LdQWeb.ViewHelpers
+
+~~~
+
+Je copie les feuilles de styles (que je place dans `assets/css`) et les polices (que je place dans `priv/static/fonts`) ainsi que les images (que je place dans `priv/static/images`).
+
+J’ai remis en place les contrôleurs pour les livres, le comité.
+
+Je voudrais maintenant utiliser un layer propre pour l’affichage comme dans une page de livre, à l’image du manifeste. J’ai essayé de faire un layout `components/layouts/as_page.html.heex`  et d’utiliser :
+
+~~~elixir
+render(conn, :manifeste, layout: :as_page)
+~~~
+
+… mais ça ne fonctionne pas. En fait, c’est un peu plus compliqué, il faut faire : 
+
+~~~elixir
+render(conn, :manifeste, 
+	layout: {LdQWeb.Layouts, :as_page}
+)
+~~~
+
+Ce qui est très pratique, c’est qu’on peut mettre les fichiers où l’on veut, dans le dossier `controllers`, ce qui permet de bien classer les choses. J’obtiens pour le moment :
+
+~~~
+lib
+		|- ldq_web
+				|- controllers
+						|- comite
+						|- livres
+						|- page
+						|- presentation
+~~~
+
+> Le dossier « page » va certainement disparaitre.
+
+Avec dans chaque dossier controller :
+
+~~~
+|- comite
+		|- comite_html/
+				|- une_page.html.heex
+				|- autre_page.html.md
+		|- comite_controller.ex
+		|- comite_html.ex
+~~~
+
+### Traduction
+
+Avant de passer à l’étude des livres, je vais traduire les termes anglais en jouant :
+
+~~~
+mix gettext.extract
+~~~
+
+… et en copiant les fichier `.pot` dans `priv/gettext/fr/LC_MESSAGES/` pour pouvoir ajouter les traductions.
+
+Et je compile les traductions :
+
+~~~
+mix gettext.merge priv/gettext
+~~~
+
+### Étude des livres
+
+Puisque les livres sont au cœur de l’application, je les étudie avant d’étudier les utilisateurs. Ce sera une structure `Livre` qui appartiendra à un contexte `Label` (qui rassemblera aussi les fiches de lecture, le classement, etc.). Comme je veux les gérer avec LiveView, je vais faire (mais pas tout de suite) :
+
+~~~
+mix phx.gen.live Label Livre livres titre writer:references:writers resume:text genres:array isbn editeur
+~~~
+
+> Note : je mets quand même un éditeur, car ce label pourra aussi accueillir des livres publiés, pourquoi pas ? (mais ils ne pourront pas être classés — ou si, au contraire, pour montrer que ce ne sont pas forcément les meilleurs…)
+
+J’ai besoin de la structure `Writer` qui correspond aux autrices et auteurs de livres (je préfère le terme anglais lorsqu’il est neutre. Que je vais faire avec :
+
+~~~
+mix phx.gen.live User Writer writers profil_id:references:profils
+~~~
+
+Et j’ai donc besoin aussi de la structure `Profil` qui sera commune à tous les users de différents type (Administrateur, Membres du comité, auteurs, lecteur, etc.). Pour éviter les confusions, un utilisateur qui sera en même temps membre et autrice par exemple, ne pourra pas avoir les deux statuts en même temps.
+
+Je dois donc aussi créer, avant, la structure `Profil` dédiée à plusieurs rôles d’utilisateur.
+
+~~~
+mix phx.gen.schema User Profil profils nom prenom pseudo naissance roles:array adresse:text phone grade:integer
+~~~
+
+Après corrections (le contexte doit être pointé, la liste doit définir le type de ses éléments), ça donne : 
+
+~~~
+mix phx.gen.schema User.Profil profils nom prenom pseudo naissance roles:array:string adresse:text phone grade:integer
+~~~
+
+Ce sera une relation many-to-many entre les livres et les auteurs, entendu qu’un writer peut avoir plus livres et un livre peut avoir plusieurs writers.
+
+Donc je créerai aussi une table `writers_livres` pour tenir les correspondances.
+
+~~~
+mix phx.gen.context Label WriterLivre writers_livres writer_id:references:writers livre_id:references:livres
+~~~
+
+Je peux créer mes tables et structures, donc dans l’ordre :
+
+* la structure `User.Profil`
+* la structure `User.Writer`
+  * et je copie les routes dans `router.ex`
+* la structure `Label.Livre`
+  * et je copie les routes dans `router.ex`
+* la structure relationnelle `Label.WriterLivre`
+
+Et je lance la migration…
+
+~~~
+mix ecto.migrate
+~~~
+
+Et je fais quelques ajustements dans les schémas :
+
+~~~elixir
+# in ldq/label/livre.ex
+
+# Dans le schéma, la relation avec le ou les writers
+many_to_many :writers, LdQ.User.Writer, 
+	join_through: "writers_livres"
+
+# Dans le changeset
+...
+# J'ajoute la relation avec l'auteur
+# (peut-être que ça ne fonctionnera pas, car c'est une
+#  relation multiple)
+|> cast_assoc(:writers)
+# Je garde juste les propriétés obligatoires
+|> validate_required([:titre, :isbn])
+~~~
+
+Dans le schéma de l’autrice ou auteur :
+
+~~~elixir
+# in ldq/user/writer.ex
+
+# Dans le schéma
+has_one :profil, LdQ.User.Profil
+
+many_to_many :livres, LdQ.Label.Livre, 
+	join_through: "writers_livres"
+
+# Dans le changeset
+...
+|> cast_assoc(:profil) # le profil doit exister
+
+~~~
+
+### Création d’un premier livre
+
+Je vais tenter de créer un premier livre, en sachant que ça risque déjà de coincer, car, normalement, il ne pourra pas y avoir de lien entre le livre est un auteur…
+
+Pour le créer, je pourrais me servir de la route dédiée :
+
+~~~
+http://localhost:4000/livres/new
+~~~
+
+… mais je préfère ajouter un lien principal pour ajouter un livre.
+
+~~~elixir
+# in ldq_web/layouts.ex, fonction main_links
+
+<a class="main" href={~p"/livres/new"}>Proposer un livre</a>
+~~~
+
+…
+
+La création d’un livre fonctionne mais… elle ne devrait pas, car je voudrais qu’il y ait forcément un auteur associé.
+
+…
+
+Je bute à nouveau sur la relation many-to-many, donc je vais prendre le temps de faire une application test qui ne fera que ça. Et je reviendrai à la mienne pour le bilan.
+
+…
+
+Je suis beaucoup revenu en arrière, car rien ne fonctionne… Il faut que je reste plus simple (même en faisant plus simple, je me heurte à des problèmes insolubles…). Je les décrirai demain. <strike>Mais la première décision que je prends, c’est de renoncer pour le moment au LiveView, parce que ça pose trop de problème. Je vais utiliser les contrôleurs normaux.</strike>
+
+load(_pied_de_page)

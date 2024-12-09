@@ -5,7 +5,11 @@
 
 Je vais poursuivre les tests entamer dans la section précédente.
 
-D'abord, pour les rendre confortable, j'ouvre un Terminal dans mon dossier p(pp_markdown) et je joue `iex -S mix run` ce qui lance l'application et va me permettre d’interagir avec elle. Par exemple, je vais pouvoir faire `iex> PPMarkdown.Engine.compile("path/de/mon/fichier.mmd")` pour tester la ou les méthodes en direct.
+D'abord, pour les rendre confortable, j'ouvre un Terminal dans mon dossier p(pp_markdown) et je joue `iex -S mix run` ce qui lance l'application et va me permettre d’interagir avec elle. Par exemple, je vais pouvoir faire :
+
+ `iex> PPMarkdown.Engine.compile("path/de/mon/fichier.mmd")` 
+
+… pour tester la ou les méthodes en direct.
 
 Chaque fois que je changerai mon code je jouerai `iex> recompile()` pour… recompiler le code.
 
@@ -16,7 +20,7 @@ Chaque fois que je changerai mon code je jouerai `iex> recompile()` pour… reco
 test "un test particulier" do
   actual = get_output_of("mon_fichier.mmd")
   assert actual == expected("""
-  Le code attendu
+  <p>Le code attendu</p>
   """)
 end
 ~~~
@@ -82,10 +86,50 @@ defp dispatch_sections(code) do
 end
 ~~~
 
+### Checksum
+
+Non, mais ne fait, comme je vas me retrouver à tester du code assez compliqué, je vais plutôt utiliser un checksum pour vérifier le code.
+
+> Pour ceux qui l’ignoreraient, vérifier avec le checksum consiste à produire avec le texte une sorte de clé, par exemple « 92CB14609AB322495B4573AFA1236A5A77BCD85CA12CAA2ED4EBAD051DB93E86 » en hashant le texte. Puisqu’un même texte produit <u>toujours</u> la même clé, il suffit de comparer deux clés pour savoir que deux textes sont identiques.
+
+Je crée la méthode `T.checksum` qui va calculer le checksum du texte produit :
+
+~~~elixir
+# in test/test_helper.exs
+
+defmodule TestHelper do
+	...
+	def checksum(string) do
+    :crypto.hash(:sha256, string) |> Base.encode16
+	end
+~~~
+
+Je vais aussi faire une méthode `get_checksum_of/2` qui va retourner le checksum du contenu du fichier plutôt que son texte comme `get_output_of/2` (je garde quand même cette fonction pour les petits textes, pour que ce soit plus visuel).
+
+~~~elixir
+def get_checksum_of(name, options) do
+	get_output_of(name, options)
+	|> checksum
+end
+~~~
+
+Pour mon confort, je vais encore simplifier les choses en faisant que les tests se résument à :
+
+~~~elixir
+test "mon test simple" do
+	assert T.file_match?(
+		"<nom du fichier>", 
+		"92CB14609AB322495B4573AFA1236A5A77BC...", 
+		@options)
+end
+~~~
+
+> Il faudra que j’apprenne à faire les macros pour pouvoir avoir juste `assert file_is_ok(...)`.
 
 
 
+### Prise en compte dans les autres applications
 
-
+Si on modifie une extension (comme mon `pp_markdown`), pour pouvoir utiliser aussitôt les modifications dans une autre application qui l’utiliserait (en app locale), il faut obligatoirement redémarrer le serveur de cette application, évidemment. 
 
 <%= raw link_other_pages(@page_index, @projet) %>
