@@ -14,7 +14,7 @@ Voilà ce que vous pouvez y trouver :
 
 [Package MARKDOWN](<%= ~p"/explorer/markdown" %>):
 :Cette quatrième application s'intéresse particulièrement à la fabrication d'une dépendance, ici pour améliorer la dépendence _phoenix-markdown_.
-: Sujets : moteur de rendu (markdown), tests, [problème de chemin](<%= (~p"/explorer") <> "/markdown/?ipage=4#problemeroute" %>).
+: Sujets : moteur de rendu (markdown), tests, [problème de chemin](<%= (~p"/explorer") <> "/markdown/?ipage=4#problemeroute" %>), [expressions régulière](<%= (~p"/explorer") <> "/markdown/?ipage=5" %>).
 
 [Application EXPLORATION](<%= ~p"/explorer/exploration" %>):
 :En fait, c'est ce site, qui me permet de tester profondément le déploiement de Phoenix (particulièrement sur l'hébergement Alwaysdata).

@@ -55,7 +55,6 @@ defmodule Exploration.MixProject do
        compile: false,
        depth: 1},
       # {:pp_markdown, git: "https://github.com/PhilippePerret/pp_markdown.git"},
-      # {:pp_markdown, path: "../pp_markdown"},
       {:pp_markdown, path: "apps/pp_markdown"}, # dépendance locale
       {:earmark, "~> 1.4", override: true},
       {:swoosh, "~> 1.5"},

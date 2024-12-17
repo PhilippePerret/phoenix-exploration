@@ -1,0 +1,354 @@
+load(_entete)
+
+## Compréhension des modules
+
+Avant de poursuivre, je voudrais mieux fixer ma compréhension des modules pour savoir si je les comprends bien. Je veux dire, répondre à ma question toute simple : est-ce que lorsque je crée un fichier module n’importe où, est-ce qu’il est accessible à toutes les autres parties et tous les autres modules.
+
+Pour ça, je crée une nouvelle petite application expérimentale que j’appelle `modul`.
+
+~~~bash
+mix phx.new modul
+~~~
+
+Je modifie déjà la page d’accueil pour qu’il n’y ait presque plus rien.
+
+Sur cette page d’accueil, je vais utiliser la variable `@valeur` pour pouvoir obtenir et afficher la valeur retournée par les modules.
+
+~~~html
+<!-- in controllers/page_html/home.html.heex -->
+
+...
+
+<p>@valeur vaut : '<%= @valeur %>'</p>
+
+~~~
+
+Évidemment, dès que je fais ça, l’application râle, il faut que je définisse cette variable.
+
+~~~elixir
+# in controller/page_controller.ex
+
+...
+
+def home(conn, _params) do
+	render(conn, :home, valeur: get_valeur())
+end
+
+def get_valeur() do
+	"nulle"
+end
+~~~
+
+
+
+### Module en dehors de tout
+
+Je commence par créer un module en dehors du dossier lib, donc à la racine de l’application, que j’appelle `moduleout.ex` :
+
+~~~elixir
+# in <app>/moduleout.ex
+
+defmodule ModuleOut do
+
+	def run do
+		"Je suis la fonction ModuleOut.run"
+	end
+		
+end
+~~~
+
+Et j’appelle ce module et cette fonction depuis mon contrôleur :
+
+~~~elixir
+# in controller/page_controller.ex
+
+def get_valeur() do
+	ModuleOut.run()
+end
+~~~
+
+L’application râle, elle ne connait pas le module `ModuleOut`.
+
+J’ajoute un import pour voir :
+
+~~~elixir
+# in controller/page_controller.ex
+defmodule ModulWeb.PageController do
+	use ModuleWeb, :controller
+	
+	import ModuleOut # +
+
+~~~
+
+L’application est incapable de trouver le module.
+
+### Module dans le dossier `lib`
+
+Je crée maintenant un module dans le dossier `lib`, de nom `module_in.ex`.
+
+~~~elixir
+# in lib/module_in.ex
+
+defmodule ModuleIn do
+	def run do
+		"je suis la fonction run du module ModuleIn"
+	end
+end
+~~~
+
+J’appelle cette fonction pour obtenir la valeur.
+
+~~~elixir
+# in controller/page_controller.ex
+
+def get_valeur() do
+	ModuleIn.run()
+end
+~~~
+
+Cette fois, même sans l’importer, je peux obtenir la valeur. La page affiche bien :
+
+~~~document
+@valeur vaut : 'je suis la fonction run du module ModuleIn'
+~~~
+
+### Non correspondance du nom
+
+Une question que je me pose aussi à chaque fois, c’est de savoir si le nom du fichier doit correspondre au nom du module (`ModuleIn` => `module_in.ex` et l’inverse : `module_in.ex` => module de nom `ModuleIn`). Le savoir, je change donc le nom du fichier pour path(mon_module.ex).
+
+…
+
+Ça ne pose aucun problème. En tout cas pour un module comme ça, qui n’est en rapport avec rien d’autre.
+
+### Accessibilité depuis la vue
+
+Je voudrais voir aussi si ce module peut être utilisé directement depuis une vue. Donc, dans mon fichier path(page_html/home.html.heex) j’ajoute : 
+
+~~~html
+<p>Par un appel direct j'obtiens : <%= ModuleIn.run() %></p>
+~~~
+
+Et ça fonctionne parfaitement ! 
+
+J’essaie tout de suite avec un module qui serait dans path(/lib/modul) :
+
+~~~elixir
+# in ./lib/modul/module_in_modul.ex
+
+defmodule ModInModul do
+
+	def run() do
+		"je suis la fonction run dans ModInModul."
+	end
+end
+~~~
+
+… et je place donc dans la vue :
+
+~~~html
+<p>Par un appel direct à ModInModul, j'obtiens : <%= ModInModul.run() %></p>
+~~~
+
+…
+
+Et ça fonctionne parfaitement aussi !
+
+### Essai des composants HEX
+
+Je voudrais tout de suite voir si on peut utiliser des composants Hex qui seraient définis dans ces modules.
+
+J’ajoute donc à ma vue, le code suivant qui, évidemment, va râler tout de suite :
+
+~~~html
+<!-- dans home.html.heex -->
+...
+<p>Bonjour, <.prenom name="Phil" exclamatif={true}/></p>
+<p>Bonjour, <.prenom name="Phil" exclamatif={false}/></p>
+~~~
+
+Et dans path(module_in.ex) j’implémente :
+
+~~~elixir
+# in module_in.ex
+
+def prenom(assigns) do
+	~H"<%= @name %>"
+end
+~~~
+
+Ça ne fonctionne pas, j’essaie de mieux définir le composant, comme il se doit :
+
+~~~elixir
+# in module_in.ex
+
+use Phoenix.Component
+
+attr :name, :string
+def prenom(assigns) do
+	~H"<%= @name %>"
+end
+~~~
+
+Ça ne change rien.
+
+Je vais essayer d’importer (ou d’utiliser avec `use`) le module `ModuleIn` dans `PageController` :
+
+~~~elixir
+# in controller/page_controller.ex
+defmodule ModulWeb.PageController do
+	use ModuleWeb, :controller
+	
+	import ModuleIn 		# +
+	
+	# ou
+	
+	use ModuleIn 				# +
+
+~~~
+
+Ni l’un ni l’autre ne fonctionne.
+
+### Faire fonctionner les composants
+
+Ma première supposition est que le module qui définit les composants doit être préfixé `ModulWeb` (le nom du module de l’application auquel on ajoute `Web`) et se trouver dans le dossier path(lib/app_web).
+
+J’ai donc trois choses à essayer :
+
+- un module à l’extérieur de path(modul_web) mais qui « augmente » le module `ModulWeb`,
+- un module dans path(modul_web) qui n’augmente pas le module `ModulWeb`
+- un module qui fait les deux : dans p(modul_web) et qui augment le module `ModulWeb`.
+
+Je commence par le troisième car, a priori, si celui-ci ne fonctionne pas, aucun des autres ne fonctionnera. Donc :
+
+~~~elixir
+# in lib/modul_web/components/module_in_components.ex
+
+defmodule ModelWeb.MesComponents do 
+	use Phoenix.Component
+
+	attr :name, :string
+	def prenom(assigns) do
+		~H"mon cher <%= @nom %>"
+	end
+	
+end
+~~~
+
+> À titre de rappel, un composant doit toujours ne comporter qu’un seul paramètres, `assigns`, qui contient les attributs définis dans la balise `<.composant attr=valeur attr=valeur ... />`
+>
+> Quand on définit `attr :name, :string` on définit un attribut qu’on doit trouver en attribut, dans le type défini, mais ça permet aussi de définir des valeurs par défaut, par exemple `attr :name, :string, default: "Truc"`
+>
+> Il faut aussi, obligatoirement (me semble-t-il), que la fonction utilise le sigil `H`.
+
+…
+
+Et ça fonctionne impeccablement, mais seulement si j’importe ce module. Pour le moment, je l’ai importé dans p(lib/modul_web/page_html.ex) où ça me semblait le plus logique. 
+
+~~~elixir
+# in lib/modul_web/page_html.ex
+
+import ModelWeb.MesComponents
+
+~~~
+
+### Lieu de définition du composant
+
+Je vais essayer maintenant de l’importer dans un seulement de ces modules :
+
+- dans le contrôleur (p(lib/modul_web/page_controller.ex)),
+- dans le module layout principal 
+  (p(lib/modul_web/components/layout.ex)),
+- dans le module des composants fournis 
+  (p(lib/modul_web/components/core_components.ex))
+
+Ça ne fonctionne dans aucun de ces trois modules, donc il faut vraiment **les importer dans le module HTML du contrôleur si on veut utiliser des composants HEX**.
+
+Je vais maintenant essayer de définir les composants ailleurs, comme je l’ai voulu.
+
+Je mets dans ma page p(home.html.heex) ce code : 
+
+~~~html
+<!-- in home.html.heex -->
+
+...
+<p>Première provenance <.ou1 /></p>
+<p>Deuxième provenance <.ou2 /></p>
+~~~
+
+Évidemment, ça râle…
+
+Mais dès que j’ai créé les modules dans les deux places définies (p(&lt;app>/) et p(app_web/)), même sans que ces modules n’augmentent `AppWeb`, il suffit de les importer pour que ça fonctionne. Le détail :
+
+~~~elixir
+# in lib/modul/components_in_module.ex
+
+defmodule MesComponentsInModule do
+  use Phoenix.Component
+  def ou1(assigns) do
+    ~H"Moi je viens de ou1 dans lib/modul/components_in_modul.ex."
+  end
+end
+~~~
+
+~~~elixir
+# in lib/modul_web/controllers/autres_components.ex
+
+defmodule MesAutresComponentsInControllers do 
+  use Phoenix.Component
+  def ou2(assigns) do
+    ~H"Je viens de ou2 dans controllers/autres_components.ex."
+  end
+end
+~~~
+
+Et je les importe dans le module HTML :
+
+~~~elixir
+# in lib/modul_web/controllers/page_html.ex
+
+defmodule ModulWeb.PageHTML do
+	...
+	import ModelWeb.MesComponents
+  import MesComponentsInModule							# +
+  import MesAutresComponentsInControllers		# +
+	...
+end
+~~~
+
+### Des modules dans des modules
+
+J’ai une dernière chose à essayer concernant les composants, c’est voir si je peux rassemble l’importation dans un seul module et, de cette manière, n’avoir qu’un seul module à important dans les modules HTML.
+
+Je vais donc essayer d’importer mes deux derniers modules dans le premier. Et donc supprimer les lignes d’import ci-dessus pour ne garder que `import ModelWeb.MesComponents`.
+
+…
+
+Ça ne fonctionne pas. Ça fonctionne seulement si j’importe avec `alias` et que je redéfinis les fonctions — en renvoyant tout de suite aux originales —, mais c’est vraiment lourd. Donc, par exemple : 
+
+~~~elixir
+# in lib/modul_web/components/modul_in_components.ex
+
+alias MesComponentsInModule, as: M1
+alias MesAutresComponentsInControllers, as: M2
+
+def ou1(assigns), do: M1.ou1(assigns)
+def ou2(assigns), do: M2.ou2(assigns)
+
+~~~
+
+Il y a peut-être des cas où ça peut être pratique, mais bon… il vaut mieux pour le moment importer tous les modules de composants (en partant du principe qu’ils seront bien organisés et nommés) dans les modules HTML qui en auront besoin.
+
+## Conclusion
+
+Je crois que dans un premier temps j’ai terminé l’exploration de ces modules et que ça m’a bien renseigner sur les possibilités offertes.
+
+- Les modules « normaux » peuvent être définis n’importe où et utilisés sans avoir à les importer.
+- Les fonctions définis dans ces modules peuvent être utilisées dans les vues, sans être importés non plus.
+- Les composants peuvent être définis où l’on veut, et avec le nom que l’on veut. On pourrait par exemple les rassembler dans un dossier p(app/lib/app_web/components/custom_components/).
+- Les modules de composants doivent être importés dans les modules HTML des pages qui doivent les utiliser.
+
+On peut passer à la suite de l’exploration ! 🚀
+
+
+
+load(_pied_de_page)

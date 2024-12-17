@@ -1,0 +1,126 @@
+load(_entete)
+
+### Résolution des problèmes
+
+D’abord, comme je constate que lorsque je m’inscris la donnée est bien enregistrée dans la table, je me dis que c’est peut-être au niveau du gestionnaire de mails que le problème se pose.
+
+Et effectivement, je vois que je ne l’ai pas défini en production. Je répare le problème : 
+
+~~~elixir
+# in config/runtime.exs
+
+    config :ldq, LdQ.Mailer,
+      adapter: Swoosh.Adapters.SMTP,
+      relay: System.get_env("SMTP_SERVER"),
+      username: System.get_env("SMTP_USERNAME"),
+      password: System.get_env("SMTP_PASSWORD"),
+      port: 587,
+      ssl: false,
+      auth: :always,
+      no_mx_lookups: true,
+      retries: 1
+
+~~~
+
+Je définis bien sûr les constantes `SMTP_SERVER`, `SMTP_USERNAME` et `SMTP_PASSWORD` dans mon administration pour le site en question.
+
+…
+
+Un problème se pose toujours…
+
+### Prendre le taureau par les cornes
+
+*(bien que je ne sois pas fan du tout des expressions tauromachistes — sic)*
+
+Pour une fois, je décide de m’y prendre correctement pour tenter de régler les problèmes. Et pour ce faire, je vais lire mes logs. En l’occurence, ici, dans le dossier p(icare/logs/sites) de mon hébergement.
+
+Je trouve déjà ces lignes : 
+
+~~~bash
+Description: ~c"Server authenticity is not verified since certificate path validation is not enabled"
+[upstream] [2523476]  Reason: ~c"The option {verify, verify_peer} and one of the options 'cacertfile' or 'cacerts' are required to enable this."
+~~~
+
+J’ajoute donc `verify: true, verify_peer: true` à la section `config :ldq, LdQ.Repo,` de p(config/runtime.exs) :
+
+~~~elixir
+# in config/runtime.exs
+
+config :ldq, LdQ.Repo,
+	...
+  verify: true,
+  verify_peer: true,
+  cacertfile: path/to/mon/fichier
+~~~
+
+Ensuite, je trouve les lignes :
+
+~~~bash
+[error] Could not warm up static assets: could not find static manifest at "/home/icare/www/label/_build/prod/rel/ldq/lib/ldq-0.2.13/priv/static/cache_manifest.json". Run "mix phx.digest" after building your static files or remove the "cache_static_manifest" configuration from your config files.
+
+~~~
+
+Je décide donc de supprimer le `cache_static_manifest` dans 
+
+~~~elixir
+# in config/prod.exs
+
+config :ldq, LdQWeb.Endpoint,
+	...
+	# cache_static_manifest: 									# -
+	#			"priv/static/cache_manifest.json"		# -
+
+~~~
+
+> Évidemment, je ne me souviens pas de l’emplacement de ces données. Pour aller vite, je fais une recherche sur tout le projet (Cmd+Maj+F) avec le mot, ici « cache_static_manifest »
+
+Je vois enfin une erreur un peu plus délicate pour moi, qui semble concerner le mail.
+
+~~~bash
+** (UndefinedFunctionError) function :mimemail.encode/2 is undefined (module :mimemail is not available)
+[13/Dec/2024:05:46:06 +0100] [upstream] [2523476] :mimemail.encode({"text", "plain", [{"Content-Type", "text/plain; charset=\"utf-8\""}, {"From", "\"LdQ\" <contact@example.com>"}, {"To", "philippe.perret@yahoo.fr"}, {"Subject", "Confirmation instructions"}, {"MIME-Version", "1.0"}], [], "\n==============================\n\nHi philippe.perret@yahoo.fr,\n\nYou can confirm your account by visiting the URL below:\n\nhttps://icare.alwaysdata.net/users/confirm/i1z0Ck-QCeDBH0-8SRO-db3SDd4ikkzU1TSI0SXsaqM\n\nIf you didn't create an account with us, please ignore this.\n\n==============================\n"}, [])
+[upstream] [2523476] (swoosh 1.17.3) lib/swoosh/adapters/smtp.ex:55: Swoosh.Adapters.SMTP.deliver/2
+[upstream] [2523476] (ldq 0.2.13) lib/ldq/mailer.ex:2: anonymous fn/2 in LdQ.Mailer.instrument/3
+[upstream] [2523476] (telemetry 1.3.0) /home/icare/www/label/deps/telemetry/src/telemetry.erl:324: :telemetry.span/3
+[upstream] [2523476] (ldq 0.2.13) lib/ldq/comptes/user_notifier.ex:15: LdQ.Comptes.UserNotifier.deliver/3
+[upstream] [2523476] (ldq 0.2.13) lib/ldq_web/live/user_live/user_registration_live.ex:60: LdQWeb.UserRegistrationLive.handle_event/3
+[upstream] [2523476] (phoenix_live_view 1.0.0-rc.7) lib/phoenix_live_view/channel.ex:508: anonymous fn/3 in Phoenix.LiveView.Channel.view_handle_event/3
+
+~~~
+
+Je vois déjà : 
+
+- qu’il manque une fonction (mimemail.encode). Le problème c’est que je ne la trouve pas, elle doit être dans une dépendance,
+- que le contenu du mail n’est pas bon, avec notamment une adresse qui ne correspond pas.
+
+Pour régler le premier problème, avec l’aide de ChatGPT, je dois :
+
+- ajouter la dépendance `{:gen_smtp, "~> 1.1"}` (qui n’est chargée qu’optionnellement par `Swoosh`
+
+Ça ne semble régler le problème qu’en apparence puisque je n’ai reçu aucun message de confirmation.
+
+Il faudra que je me pose sur le problème plus sérieusement.
+
+### Retour au problème de base
+
+Mais je dois résoudre ce problème de base de données qui ne fonctionne pas en SSL (qui fonctionne, mais qui se plaint en disant que les certificats ne sont pas valides).
+
+Je viens de passer **plusieurs heures** avec des exemples sur github et avec ChatGPT pour essayer un milliard de solutions différentes…
+
+On en arrive à statuer que c’est en fait mon fichier certificat qui n’est pas valide. J’ai demandé au support d’Alwaysdata de m’indiquer ce que je dois utiliser. 
+
+Mon interlocutrice privilégiée, Héloïse, me répond dans les 10 minutes. Après un petit échange, elle me fournit une commande qui me permet (presque) de récupérer les certificats : 
+
+~~~bash
+openssl s_client -starttls postgres -connect postgresql-icare.alwaysdata.net:5432 -showcerts
+~~~
+
+> Comment voulez-vous que je trouve moi-même cette commande ???…………
+
+Mais bon… elle ne veut pas produire tous les certificats (elle n’en produit que 2 puis génère une erreur).
+
+Mais après discussion avec le support d’Alwaysdata — toujours très disponible — je comprends qu’en fait la communication entre l’application est la base se fait de toutes façons en SSL et que de toutes façons aussi ça n’avait pas de sens de vouloir être en SSL puisque la base étant sur l’hébergeur aussi, les communications se faisaient sans « sortir », si je peux l’exprimer comme ça. En fait, donc, d’après ce que je comprends, je peux donc supprimer ce `ssl: true`. ChatGPT confirme la chose, donc je vais supprimer ça et passer à autre chose (en plus, tous les problèmes venaient peut-être de là).
+
+
+
+load(_pied_de_page)

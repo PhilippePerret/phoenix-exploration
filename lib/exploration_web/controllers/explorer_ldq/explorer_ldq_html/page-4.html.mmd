@@ -1,0 +1,196 @@
+load(_entete)
+
+Après avoir passé un moment à travailler sur l’extension [pp_markdown]<%= ~p"/explorer" <> "/markdown" %> je reprends cette application — ou plutôt ce site qui doit révolution l’autoédition 🤣🤪 — pour finaliser ses premières pages.
+
+## Déploiement
+
+D’abord, je procède à son déploiement, en sachant que par rapport à ce site, la grande différence est qu’on a ici une base de données (qui va être hyper active). Et, comme je l’anticipais, ça coince tout de suite à ce niveau, car la définition : 
+
+~~~bash
+DATABASE_URL=icare_ldq_label
+~~~
+
+… que j’avais mise dans la configuration du site, évidemment, ne fonctionne pas. Mais en me référant au fichier de configuration de Phoenix, je trouve dans p(config/prod.exs) la donnée qu’il attend. En l’occurrence, ça doit avoir cette forme : 
+
+~~~bash
+DATABASE_URL=ecto://XXXX:YYYY@postgresql-icare.alwaysdata.net/icare_ldq
+
+où :
+
+	XXXX est l'identifiant
+	YYYY est le mot de passe
+~~~
+
+J’ai créé sur le site la base `icare_ldq_prod` mais je ne sais pas encore si ça va fonctionner.
+
+
+
+
+
+
+
+### Domaines
+
+J’achète aussi chez Alwaysdata les deux domaines qui vont être utilisés pour ce label, à savoir : 
+
+* path([https://www.lecture-de-qualite.fr](https://www.lecture-de-qualite.fr))
+* path([https://www.lecture-de-qualite.net](https://www.lecture-de-qualite.net))
+
+Mais lorsque je les utilise, quelques temps après les avoir créés, ils s’affichent mais les *assets* ne fonctionnent pas :
+
+* aucune feuille de style n’est active,
+* la police principale (NanumMyeongjo) n’est pas utilisée (peut-être lié au problème précédent).
+
+J’essaie d’ajouter `<base href={~p"/"} />` dans le `<head>` mais ça ne change rien.
+
+Je vais essayer, juste pour voir, de le mettre à `<base href="www.lecture-de-qualite.fr/" />` juste pour voir (car je ne pourrai pas le garder en développement. Mais… je suis bête, il suffit que j’utilise `get_env` pour savoir quoi mettre… Donc, dans mon root (path(ldq_web/components/layouts/root.html.heex)), je vais ajouter :
+
+~~~html
+<%= if get_env() == :prod %>
+  
+<% end %>
+~~~
+
+Mais en fait, avec l’aide de ChatGPT, je résous le problème en mettant dans mon fichier path(config/prod.exs) une meilleure valeur de Endpoint : 
+
+~~~elixir
+config :ldq, LdQWeb.Endpoint,
+  url: [host: "www.lecture-de-qualite.fr", port: 8103],
+
+~~~
+
+Et ça marche !
+
+Oui… enfin… presque… Parce que j’ai un problème dès que je veux m’inscrire… Ça tourne en boucle et je ne peux pas remplir le formulaire d’inscription.
+
+## Mieux déployer
+
+En fait, je m’aperçois en relisant la documentation du déploiement par release que je n’ai fait que la moitié des choses… Avant de jouer `MIX_ENV=prod mix release` j’ai plusieurs choses à préparer pour pouvoir utiliser la base de données.
+
+Et puis il faudra que je vérifie aussi si mon gestionnaire de mails est bien réglé pour l’application en mode production.
+
+Je vais m’appuyer sur le [documentation sur les releases](https://hexdocs.pm/phoenix/releases.html#releases-assemble).
+
+Je vais tout recommencer en créant une nouvelle release.
+
+1. Je dois générer d’abord les scripts qui vont faire les migrations, etc. avec 
+     `mix phx.gen.release`
+     => ça crée notamment le fichier p(lib/ldq/release.ex).
+2. Dans path(mix.exs) je mets le numéro de version à « 0.2.8 » (il était à « 0.2.7. »).
+3. Je `git commit` puis je téléverse les fichiers sur mon hébergement alwaysdata.
+4. Je me connecte en SSH à mon compte avec
+     `ssh moncompte@ssh-moncompte.alwaysdata.net`
+5. et je rejoins le dossier de mon application.
+6. Je charge les dépendances utiles en mode production avec
+     `mix deps.get -only prod`
+7. Je compile avec `MIX_ENV=prod mix compile`
+     => « Generated ldq app »
+8. Je compile les assets avec `MIX_ENV=prod mix assets.deploy`
+     => crée le fichier digest à path(priv/static).
+9. Et maintenant je crée la release avec `MIX_ENV=prod mix release`
+10. Ensuite, je dois jouer les migrations (ce sera à faire chaque fois qu’il y aura de nouvelles migrations à jouer). Il faut d’abord que j’`exporte`  `DATABASE_URL` et la clé `SECRET_KEY_BASE` et ensuite je peux jouer la commande. Ça donnera (le nom de la base — « icare_basename » ci-dessous — doit correspondre exactement) :
+
+     ~~~bash
+     export DATABASE_URL=ecto://moncpt:pwd@postgresql-moncpt.alwaysdata.net/icare_basename
+     export SECRET_KEY_BASE=xxxxxxxxxxx
+     _build/prod/rel/ldq/bin/ldq eval "LdQ.Release.migrate()"
+     ~~~
+
+     => Et je vois les migrations se créer.
+11. Je vais redémarrer le site (comme je l’ai dit plus haut, ça ne semble pas nécessaire, mais là je préfère le faire) pour essayer à nouveau de m’inscrire.
+
+…
+
+Malheureusement, j’ai toujours un problème lorsque j’essaie de m’inscrire.
+
+Piste : voir si le nom de la base de données et bien le même dans mes données (car j’ai peut-être mis `icare_ldq_prod`…)
+
+… 
+
+Non, c’est bon.
+
+Après consultation de mes logs, je vois qu’il manque le certificat pour la connexion SSL avec la base de données. Avec l’aide de ChatGPT, je rejoins, dans mon tableau de bord, la section path(Certificats SSL/url.de.mon.site/) et je télécharge le « certificat intermédiaire » que je nomme path(certificat.pem) à la racine du site.
+
+Dans la configuration path(runtime.exs), j’ajoute :
+
+~~~elixir
+# in config/runtime.exs
+
+  config :ldq, LdQ.Repo,
+  	...
+    ssl: true,
+    cacertfile: "/home/<monid>/www/label/certificat.pem"
+~~~
+
+Je crée une nouvelle release (téléversement, etc.) et j’essaie à nouveau.
+
+…
+
+Ça ne fonctionne toujours pas… Mais dans les logs je vois une nouvelle erreur qui me conseille de régler le `:check_origin` de ma config `LdQWeb.Endpoint` :
+
+~~~elixir
+# in config/prod.exs
+
+config :ldq, LdQWeb.Endpoint,
+  url: [host: "www.lecture-de-qualite.net", port: 8103],
+  check_origin: [														# +
+  	"https://www.lecture-de-qualite.net", 	# +
+  	"https://www.lecture-de-qualite.fr"			# +
+  	]																				# +
+
+~~~
+
+> C’est quand même incroyablement compliqué (et tout simple en même temps…)
+
+Ce sera ma version « 0.2.12 ». Je ne sais plus si je l’ai dit, mais pour la clarté (et savoir surtout si le site redémarrait seul parfois) j’écris cette version dans l’entête, de travail. Pour faire ça, j’ai simplement, dans p(config/config.exs) ajouté la ligne : 
+
+~~~elixir
+# in config/config.exs
+
+config :ldq, 
+	:app_version, 
+	LdQ.MixProject.project()[:version]
+~~~
+
+… et ensuite, dans path(root.html.heex) il suffit que j’ajoute :
+
+~~~html
+<header>
+  ...
+  <div id="app-version">
+    <%= Application.get_env(:ldq, :app_version) %>
+  </div>
+~~~
+
+… et je stylise la balise avec : 
+
+~~~css
+header div#app-version {
+  position: absolute;
+  left: -9pt;
+  top: 16pt;
+  color: white;
+  font-size: 9pt;
+  z-index: 1;
+  letter-spacing: 3px;
+  rotate: 270deg;
+}
+~~~
+
+Je `mix release` pour produire la nouvelle version. Cette fois, j’attends un peu pour voir si le site va redémarrer tout seul avec la nouvelle version « 0.2.12 ».
+
+…
+
+Même en rechargeant plusieurs fois la page (en forçant le rechargement), ça ne passe pas à la version suivante. Je redémarre le serveur.
+
+…
+
+Bingo ! 🥳 Cette fois je peux rejoindre le formulaire d’inscription sans problème. Mais une erreur s’affiche (trop brièvement) lorsque je soumets le formulaire. Je vais aller voir dans les logs ce qui se passe.
+
+> Il faudra bien que je pense à ajouter toutes ces étapes dans la page déploiement de ce site d’exploration.
+
+Je re-vérifie les logs…
+
+
+
+load(_pied_de_page)

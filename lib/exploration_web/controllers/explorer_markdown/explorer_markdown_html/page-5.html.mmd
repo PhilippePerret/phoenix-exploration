@@ -1,5 +1,4 @@
-<%= raw @titre %>
-<%= raw link_other_pages(@page_index, @projet) %>
+load(_entete)
 
 ### Reprise du développement du traitement de markdown
 
@@ -128,8 +127,52 @@ end
 
 
 
-### Prise en compte dans les autres applications
+### Prise en compte des changements dans les autres applications
 
 Si on modifie une extension (comme mon `pp_markdown`), pour pouvoir utiliser aussitôt les modifications dans une autre application qui l’utiliserait (en app locale), il faut obligatoirement redémarrer le serveur de cette application, évidemment. 
 
-<%= raw link_other_pages(@page_index, @projet) %>
+### Styliser et identifier les paragraphes
+
+Je voudrais que l’on puisse utiliser cette tournure :
+
+~~~document
+classcss.Mon paragraphe trop stylé.
+~~~
+
+… pour obtenir :
+
+~~~html
+<p class="classcss">Mon paragraphe trop stylé.</p>
+~~~
+
+Ou encore :
+
+~~~document
+moncss.monid# Le paragraphe stylé et identifié !
+~~~
+
+… pour obtenir :
+
+~~~html
+<p id="monid" class="moncss">
+  Le paragraphe stylé et identifié !
+</p>
+~~~
+
+Et enfin :
+
+~~~document
+style1.style2.Mon paragraphe vraiment trop stylé
+~~~
+
+… pour obtenir :
+
+~~~html
+<p class="style1 style2">
+  Mon paragraphe vraiment trop stylé
+</p>
+~~~
+
+Pour ça, je vais devoir m’intéresser de près aux type `Regex` parce que mes premiers essais ne sont pas concluants.
+
+load(_pied_de_page)
