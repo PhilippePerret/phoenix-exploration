@@ -6,7 +6,7 @@ defmodule ExplorationWeb.ExplorerMarkdownController do
   def explorer(conn, params) do
     page_index  = String.to_integer(params["ipage"] || "1")
     render(conn, String.to_atom("page-#{page_index}"),
-      titre: String.replace(@titre_general, ~r/__PAGE__/, "#{page_index}"),
+      titre: String.replace(@titre_general, "__PAGE__", "#{page_index}"),
       page_title: "Exploration de phoenix avec LdQ",
       page_index: page_index,
       projet: "markdown"

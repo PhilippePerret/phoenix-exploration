@@ -44,6 +44,8 @@ defmodule ExplorationWeb do
 
       import Plug.Conn
 
+      use Pharkdown
+
       unquote(verified_routes())
     end
   end

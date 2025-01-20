@@ -9,14 +9,7 @@ defmodule Exploration.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
-      deps: deps()#,
-      # releases: [
-      #   exploration: [
-      #     include_executables_for: [:unix],
-      #     applications: [runtime_tools: :permanent]
-      #   ]
-      # ]
-
+      deps: deps()
     ]
   end
 

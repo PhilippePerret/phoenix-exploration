@@ -75,7 +75,7 @@ defmodule PPMarkdown.Engine do
   # c'est celle qui sera appelée par le rendu (par
   # la demande de rendu de la page)
   
-  def compile(path, name) do
+  def compile\(path, name) do
 
     # Plus tard, on pourra définir des options à
     # partir des configurations
@@ -83,8 +83,8 @@ defmodule PPMarkdown.Engine do
 
     path
     |> File.read!()         # je lis le code du fichier
-    |> mmd_transformations(options)  # je le traite
-    |> EEx.compile_string(
+    |> mmd_transformations\(options)  # je le traite
+    |> EEx.compile_string\(
         engine: Phoenix.HTML.Engine, 
         file: path, 
         line: 1
@@ -92,14 +92,14 @@ defmodule PPMarkdown.Engine do
   end
 
   # Méthode principale de traitement du code
-  defp mmd_transformations(code, options) do
+  defp mmd_transformations\(code, options) do
     "<p>Je vais transformer le code « #{code} »</p>"
   end
 
 end 
 ~~~
 
-Et je l'essaie sur ma page [explorer_markdown_html/page-test.html.mmd](<%= ~p"/explorer/markdown/?ipage=2" %>) (revenir en cliquant sur le bouton « Retour en arrière » du navigateur ou choisir d’ouvrir la page dans une nouvelle fenêtre).
+Et je l'essaie sur ma page [explorer_markdown_html/page-test.html.mmd](/explorer/markdown/?ipage=2) (revenir en cliquant sur le bouton « Retour en arrière » du navigateur ou choisir d’ouvrir la page dans une nouvelle fenêtre).
 
 Bingo ! 🥳 Ça fonctionne ! Je suis bien passé par le moteur de rendu et je peux maintenant traiter le code à ma guise.
 
@@ -122,21 +122,21 @@ Ceci est une balise.
 J'obtiens ce résultat (en tout cas partiellement) en ajoutant :
 
 ~~~elixir
-|> EEx.compile_string(engine: Phoenix.HTML.Engine, file: path, line: 1)
+|> EEx.compile_string\(engine: Phoenix.HTML.Engine, file: path, line: 1)
 ~~~
 
 … comme dans le package markdown. Mon code devient :
 
 ~~~elixir
-def compile(path, name) do
+def compile\(path, name) do
 
   # Plus tard, on pourra définir des options
   options = %{}
 
   path
   |> File.read!()  
-  |> mmd_transformations(options)
-  |> EEx.compile_string(
+  |> mmd_transformations\(options)
+  |> EEx.compile_string\(
       engine: Phoenix.HTML.Engine, 
       file: path, 
       line: 1
@@ -149,9 +149,9 @@ Pour garder les traitements markdown de base, j'ajoute la ligne de traitement :
 ~~~elixir
 path
 |> File.read!()  
-|> Earmark.as_html!(earmark_options()) # <=== +
-|> mmd_transformations(options)
-|> EEx.compile_string(engine: Phoenix.HTML.Engine, file: path, line: 1)
+|> Earmark.as_html!(earmark_options\()) # <=== +
+|> mmd_transformations\(options)
+|> EEx.compile_string\(engine: Phoenix.HTML.Engine, file: path, line: 1)
 ~~~
 
 Et comme je veux utiliser tous les traitements de PhoenixMarkdown, mais que je ne veux pas faire un appel au module à l'intérieur de mon moteur de vue, je copie-colle tout son code dans le mien. Je ferais juste une citation en début de fichier.

@@ -1,0 +1,23 @@
+<%= raw @titre %>
+<%= raw link_other_pages(@page_index, @projet) %>
+<h3>Premiers ajouts de traitements</h3>
+<div class="p">En premier lieu, pour cette application d’exploration particulière, comme j’ai beaucoup de chemins d’accès à écrire, je voudrais pouvoir appliquer facilement leur style en <nowrap>utilisant&nbsp;:</nowrap></div>
+<pre><code lang="elixir">
+TOKEN2NEKOT
+</code></pre>
+<div class="p">Je crée donc la <nowrap>méthode&nbsp;:</nowrap></div>
+<pre><code lang="elixir">
+defp transforme_paths\(code) do
+Regex.replace\(~r"path\((.*)\)"U, code, "&lt;path>\\1&lt;/path>")
+end
+</code></pre>
+<div class="p">Ma méthode <code>mmd_transformations</code> devient <nowrap>donc&nbsp;:</nowrap></div>
+<pre><code lang="elixir">
+defp mmd_transformations(code, _options) do
+code 
+|> transforme_paths()
+end
+</code></pre>
+<hr/>
+<div class="p">Je veux pouvoir traiter les codes <code><.fonction ...></code>.</div>
+<%= raw link_other_pages(@page_index, @projet) %>
