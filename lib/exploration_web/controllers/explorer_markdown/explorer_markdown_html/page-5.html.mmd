@@ -4,7 +4,7 @@ load(_entete)
 
 Je vais poursuivre les tests entamer dans la section précédente.
 
-D'abord, pour les rendre confortable, j'ouvre un Terminal dans mon dossier p(pp_markdown) et je joue `iex -S mix run` ce qui lance l'application et va me permettre d’interagir avec elle. Par exemple, je vais pouvoir faire :
+D'abord, pour les rendre confortable, j'ouvre un Terminal dans mon dossier p(pharkdown) et je joue `iex -S mix run` ce qui lance l'application et va me permettre d’interagir avec elle. Par exemple, je vais pouvoir faire :
 
  `iex> PPMarkdown.Engine.compile("path/de/mon/fichier.mmd")` 
 
@@ -47,7 +47,7 @@ J'implémente ces deux méthodes de cette façon :
 
 def get_output_of(filename, options) do
   if options do
-  	Application.put_env(:pp_markdown, :options, options)
+  	Application.put_env(:pharkdown, :options, options)
   end
   {:__block__, _, liste} = Engine.compile(
   	"test/fixtures/textes/#{filename}", filename)
@@ -65,7 +65,7 @@ end
 
 ~~~
 
-Et je veux implémenter le nouveau fonctionnement, en séparant dès le départ les blocs de code (entre <%= "~" <> "~~ ... ~~" <> "~" %> du reste, pour deux raisons :
+Et je veux implémenter le nouveau fonctionnement, en séparant dès le départ les blocs de code (entre <%= "~" <> "~~ ... ~~" <> "~" %>) du reste, pour deux raisons :
 
 * pour pouvoir leur appliquer `Makeup.highlight` (qui attend seulement un bloc de code),
 * pour leur appliquer un traitement minimal des autres traitement (pas de traiter des `<% ... %>`, des marques d’italique, etc.).
@@ -129,7 +129,7 @@ end
 
 ### Prise en compte des changements dans les autres applications
 
-Si on modifie une extension (comme mon `pp_markdown`), pour pouvoir utiliser aussitôt les modifications dans une autre application qui l’utiliserait (en app locale), il faut obligatoirement redémarrer le serveur de cette application, évidemment. 
+Si on modifie une extension (comme mon `pharkdown`), pour pouvoir utiliser aussitôt les modifications dans une autre application qui l’utiliserait (en app locale), il faut obligatoirement redémarrer le serveur de cette application, évidemment. 
 
 ### Styliser et identifier les paragraphes
 

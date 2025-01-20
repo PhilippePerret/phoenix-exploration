@@ -7,3 +7,7 @@
 @import "app/ui.css";
 @import "app/html_elements.css";
 @import "highlight/perldoc.css";
+/* For Pharkdown — You can choose an other theme */
+@import "/Users/philippeperret/Programmes/Phoenix/xDivers-app-essais/phoenix-exploration/_build/dev/lib/pharkdown/priv/static/css/themes/pharkdown.css";
+
+

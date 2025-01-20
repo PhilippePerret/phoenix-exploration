@@ -1,6 +1,8 @@
 defmodule ExplorationWeb.PageController do
   use ExplorationWeb, :controller
 
+  use Pharkdown
+
   @valid_pages [
     "deploiement",
     "sigles",

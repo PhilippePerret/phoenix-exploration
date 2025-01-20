@@ -72,20 +72,6 @@ config :phoenix, :json_library, Jason
 # --- Pour Markdown ---
 # config :phoenix, :template_engines, md: PhoenixMarkdown.Engine
 
-# --- Pour mon markdown à moi ---
-# config :phoenix, :template_engines, mmd: PPMarkdown.Engine
-config :phoenix, :template_engines, md: PPMarkdown.Engine, mmd: PPMarkdown.Engine
-config :pp_markdown, :options, %{
-  gfm: true, 
-  smartypants: false, 
-  breaks: true, 
-  server_tags: :all,
-  compact_output: true
-}
-config :pp_markdown, :table_vars, %{
-  app_name: "Phoenix-Exploration"
-}
-
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"

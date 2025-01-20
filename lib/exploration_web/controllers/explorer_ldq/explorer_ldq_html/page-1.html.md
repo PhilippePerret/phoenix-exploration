@@ -232,7 +232,7 @@ Je vais modifier un peu le root pour avoir un entête qui correspondra à l’en
 
 Et d’ores et déjà je compte faire des essais avec *Earmark* pour voir s’il peut gérer les `<%= ... %>` comme le fait l’engin Markdown que je ne veux pas utiliser. Je vais faire une méthode générique qui récupère un message et le transforme en HTML :
 
-> La suite n'est plus pertinente puisque j'ai entretemps créer l'extension `pp_markdown` qui me permet d'utiliser des fichiers p(.mmd) qui sont traités en profondeur.
+> La suite n'est plus pertinente puisque j'ai entretemps créer l'extension `pharkdown` qui me permet d'utiliser des fichiers p(.mmd) qui sont traités en profondeur.
 
 ~~~elixir
 def markdownize_dbtexte(texte_id, _conn) do

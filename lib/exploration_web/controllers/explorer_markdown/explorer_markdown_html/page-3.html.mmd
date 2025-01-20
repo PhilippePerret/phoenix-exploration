@@ -1,19 +1,19 @@
 <%= raw @titre %>
 <%= raw link_other_pages(@page_index, @projet) %>
 
-Je vais essayer de faire de mon *pp_markdown* une application pour pouvoir me passer totalement de *phoenix_markdown* qui n'est pas à jour et qui m'oblige à passer par lui pour définir des variables (notamment la table `@table_vars`).
+Je vais essayer de faire de mon *pharkdown* une application pour pouvoir me passer totalement de *phoenix_markdown* qui n'est pas à jour et qui m'oblige à passer par lui pour définir des variables (notamment la table `@table_vars`).
 
-J'essaie de crée un fichier définissant une application dans le dossier path(pp_markdown_1.1).
+J'essaie de crée un fichier définissant une application dans le dossier path(pharkdown_1.1).
 
-Ça ne fonctionne pas comme ça, mais j’ai trouvé dans la documentation comment utiliser une dépendance sans pour autant créer vraiment une dépendance. Il suffit que je sauve *pp_markdown* sur github et que je mets dans les `depts` de mon path(mix.ex) :
+Ça ne fonctionne pas comme ça, mais j’ai trouvé dans la documentation comment utiliser une dépendance sans pour autant créer vraiment une dépendance. Il suffit que je sauve *pharkdown* sur github et que je mets dans les `depts` de mon path(mix.ex) :
 
 ~~~elixir
 depts = [
 	...
 	{
-		:pp_markdown, 
+		:pharkdown, 
 		git: 
-			"https://github.com/PhilippePerret/pp_markdown.git"
+			"https://github.com/PhilippePerret/pharkdown.git"
 	}
 ]
 ~~~
@@ -27,10 +27,10 @@ Donc je vais sortir mon dossier de mon explorateur et l’enregistrer sur git.
 J’ai créé le dépôt avec la même architecture que path(phoenix_markdown) :
 
 ~~~
-pp_markdown.git
+pharkdown.git
 		|- lib/
-				|- pp_markdown.ex
-				|- pp_markdown/
+				|- pharkdown.ex
+				|- pharkdown/
 						|-> engine.ex
 		|- LICENSE
 		|- mix.exs
@@ -47,11 +47,11 @@ Bingo ! 🥳 Il a bien chargé mon dossier depuis mon compte github.
 
 ### Configuration de l’application
 
-Je vais maintenant voir si l’application `PPMarkdown` est maintenant connue de mon app et si `:pp_markdown` est sa marque.
+Je vais maintenant voir si l’application `Pharkdown` est maintenant connue de mon app et si `:pharkdown` est sa marque.
 
 …
 
-Malheureusement, ça ne suffit pas, il en faut un peu plus. Je vais au moins créer le fichier path(mix.lock). Dans mon dossier path(pp_markdown) je joue :
+Malheureusement, ça ne suffit pas, il en faut un peu plus. Je vais au moins créer le fichier path(mix.lock). Dans mon dossier path(pharkdown) je joue :
 
 ~~~bash
 mix deps.get
@@ -83,7 +83,7 @@ Comme j’ai oublié de gitignorer les dossier path(_build) et path(deps), je pr
 Sauf que maintenant, en rechargeant j’obtiens l’erreur :
 
 ~~~
-* Getting pp_markdown (https://github.com/PhilippePerret/pp_markdown.git)
+* Getting pharkdown (https://github.com/PhilippePerret/pharkdown.git)
 ...
 fatal: reference is not a tree: 9145a86b8cde0a64c9cc780623846e1b29c3c41e
 ** (Mix) Command "git --git-dir=.git checkout --quiet 9145a86b8cde0a64c9cc780623846e1b29c3c41e" failed

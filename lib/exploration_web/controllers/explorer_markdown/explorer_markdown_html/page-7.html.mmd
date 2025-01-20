@@ -1,0 +1,60 @@
+load(_entete)
+
+### AST
+
+Je vais m’intéresser maintenant à un concept que j’ai croisé souvent dans la documentation, mais que j’ai juste effleuré au détour des rendus et des interprétation du code. C’est le concept d’« AST ».
+
+« AST » signifie « Abstract Syntax Tree », c’est-à-dire dans notre langue « Arbre de syntaxe abstraite » (ou « Arbre abstrait de syntaxe » ?).
+
+*Leaf nodes* : les nœuds terminaux, sans enfant dans l’arbre. Par exemple les littéraux (:atom, `“string“`, 12).
+
+Un nœud non terminal est représenté par un tuple de 3 éléments :
+
+~~~
+{ :<type>, [<contexte>], [deux éléments du noeud] }
+~~~
+
+Par exemple, pour :
+
+~~~elixir
+quote do
+	1 + 2
+end
+~~~
+
+… on obtient le 3-tuple :
+
+~~~
+{:+, [], [1, 2]}
+~~~
+
+Elixir appelle AST une *quoted expression* (parce que `quote/2` est la primitive dans laquelle le code est transformé en donnée). Donc, dans la documentation, une « quoted expression » (expression quotée) et une « AST » sont utilisées de façon interchangeable, l’une pour l’autre.
+
+#### Variable
+
+Une variable est représentée de cette manière :
+
+~~~elixir
+quote do
+	foo
+end
+# => {:foo, [], Elixir}
+~~~
+
+#### Contexte
+
+On peut ajouter le contexte d’une expression quoté :
+
+~~~elixir
+quote context: Foo do
+	bar
+end
+
+# => {:bar, [], Foo}
+~~~
+
+
+
+
+
+load(_pied_de_page)

@@ -1,0 +1,14 @@
+load(_entete)
+
+## Reprise
+
+Je reprends l’extension avec l’idée de mieux « tokanisé » tout ce qui relève du code et tout ce qui relève du texte. Car, par exemple, je n’aime pas du tout que des code comme `<%= ....%>` soient transformés d’abord en `&lt;%= ... %&gt;` pour être ensuite retransformé dans le code original. Je vais plutôt fonctionner comme pour les autres blocs de code : les mettre de côté puis les remettre à la fin. Ça sera valable pour :
+
+- les codes commençant et finissant par `~~~` (bloc de code),
+- les codes entre `...` (backsticks),
+- les codes entres `<% ... %>`,
+- les codes entre `<. ... />` (qui vont être, à mon avis, les plus difficiles à traiter).
+
+En passant, j’ai trouvé un exemple expert de la question, [Mitchell Hanberg](https://www.mitchellhanberg.com/how-eex-turns-your-template-into-html/), qui a notamment fait une app pour voir le travail du compileur.
+
+load(_pied_de_page)

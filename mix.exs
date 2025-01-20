@@ -26,7 +26,7 @@ defmodule Exploration.MixProject do
   def application do
     [
       mod: {Exploration.Application, []},
-      extra_applications: [:logger, :runtime_tools, :pp_markdown]
+      extra_applications: [:logger, :runtime_tools]
     ]
   end
 
@@ -40,7 +40,7 @@ defmodule Exploration.MixProject do
   defp deps do
     [
       {:phoenix, "~> 1.7.14"},
-      {:phoenix_html, "~> 4.1"},
+      {:phoenix_html, "~> 4.1", override: true},
       {:phoenix_live_reload, "~> 1.2", only: :dev},
       # TODO bump on release to {:phoenix_live_view, "~> 1.0.0"},
       {:phoenix_live_view, "~> 1.0.0-rc.1", override: true},
@@ -54,8 +54,8 @@ defmodule Exploration.MixProject do
        app: false,
        compile: false,
        depth: 1},
-      # {:pp_markdown, git: "https://github.com/PhilippePerret/pp_markdown.git"},
-      {:pp_markdown, path: "apps/pp_markdown"}, # dépendance locale
+      # {:pharkdown, git: "https://github.com/PhilippePerret/pharkdown.git"},
+      {:pharkdown, path: "/Users/philippeperret/Programmes/Phoenix/pharkdown"},
       {:earmark, "~> 1.4", override: true},
       {:swoosh, "~> 1.5"},
       {:finch, "~> 0.13"},

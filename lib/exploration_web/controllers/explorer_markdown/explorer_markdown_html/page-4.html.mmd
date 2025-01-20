@@ -45,53 +45,25 @@ Je décide de le faire directement dans mon application.
 
 …
 
-Après de nombreux errements, j’arrive à faire fonctionner un premier test :
-
-~~~elixir
-# J'essaie de tester ici pp_markdown puisque je n'y arrive pas dans l'extension elle-même
-defmodule PPMarkdown.EngineTest do
-
-  use ExUnit.Case
-
-  alias PPMarkdown.Engine
-
-  test "un simple paragraphe" do
-
-    Application.put_all_env(pp_markdown: [server_tags: false])
-
-    {:__block__, _, liste} = 
-      "test/fixtures/textes/simple_paragraphe.mmd"
-      |> Engine.compile("simple_paragraphe.mmd")
-   
-      actual = Keyword.get(liste, :safe)
-
-    assert ["<p>Un simple paragraphe</p>"] == actual
-    
-  end
-
-end
-
-~~~
-
 Et je peux m’apercevoir que le retour n’est pas bon du tout et correspond à ce que je peux voir sur le site.
 
-### Travail sur le code de `PPMarkdown`
+### Travail sur le code de `Pharkdown`
 
 Avant de poursuivre, je voudrais rendre possible le fait de travailler sur ma dépendance (dans son dossier, bien sûr) mais sans avoir à tout recharger chaque fois dans l’application. ChatGPT m’indique comme faire. Il suffit, dans dans les deps de path(mix.exs) que je mette :
 
 ~~~elixir
-{:pp_markdown, path: "chemin/vers/mon/dossier/local"},
+{:pharkdown, path: "chemin/vers/mon/dossier/local"},
 ~~~
 
 … et normalement le tour est joué. Je vais essayer ça (avec de gros doutes quand même. Je place donc :
 
 ~~~elixir
-{:pp_markdown, path: "../pp_markdown"},
+{:pharkdown, path: "../pharkdown"},
 ~~~
 
-… dans mon fichier path(mix.exs) puisque le dossier de l’application et de pp_markdown se trouvent au même niveau.
+… dans mon fichier path(mix.exs) puisque le dossier de l’application et de pharkdown se trouvent au même niveau.
 
-Et je `mix deps.clean pp_markdown` puis je `mix deps.get` … Sauf que la dépendance n’est pas chargée.
+Et je `mix deps.clean pharkdown` puis je `mix deps.get` … Sauf que la dépendance n’est pas chargée.
 
 …
 
@@ -109,27 +81,8 @@ Bon, en fait, rien de ce que j’ai essayé ne fonctionne, en vrai.
 
 ### Nouvelle direction : l’app dans l’app
 
-Je vais utilisé une nouvelle direction avec l’aide de ChatGPT : une « app dans l’app », c’est-à-dire que je vais créer et développer *PPMarkdown* à l’intérieur même de mon application (je garde quand même l’idée d’une dépendance et je l’enregistrerai comme ça).
+--Je vais utiliser une nouvelle direction avec l’aide de ChatGPT : une « app dans l’app », c’est-à-dire que je vais créer et développer *PPMarkdown* à l’intérieur même de mon application (je garde quand même l’idée d’une dépendance et je l’enregistrerai comme ça).//Non, j'ai créé maintenant ma propre extension entièrement gérée comme une *vraie* extension--.
 
-Pour ça, je dois créer un dossier path(phoenix-exploration/apps) et j’y mets mon dossier path(pp_markdown) principal. J’ai mis bien sûr `/apps/` dans mon path(.gitignore) pour qu’il ne s’occupe pas de ce dossier.
-
-Je dois mettre le dossier comme dépendance locale, donc dans path(mix.exs) :
-
-~~~elixir
-{:pp_markdown, path: "apps/pp_markdown"}
-~~~
-
-Pour que `PPMarkdown` soit démarrée automatiquement, il faut que je l’ajoute aux *extra_applications* de mon app principale : 
-
-~~~elixir
-def application do
-	[
-  	applications: [:phoenix],
-    extra_applications: [:pp_markdown]
-  ]
-end
-
-~~~
 <a name="problemeroute"></a>
 
 ### Problèmes de route ou de chemin ?

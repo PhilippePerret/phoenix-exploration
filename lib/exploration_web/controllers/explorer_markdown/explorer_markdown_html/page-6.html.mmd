@@ -4,7 +4,7 @@ load(_entete)
 
 Donc, avant d’implémenter la transformation, je dois travailler un peu mieux les expressions régulières qui pour le moment de font pas ce que j’attends. 
 
-Pour les travailler confortablement, je crée un fichier p(essai.exs) à la racine de mon extension p(pp_markdown) et je mets à l’intérieur :
+Pour les travailler confortablement, je crée un fichier p(essai.exs) à la racine de mon extension p(pharkdown) et je mets à l’intérieur :
 
 ~~~elixir
 defmodule Essai do
@@ -214,9 +214,7 @@ defp class_et_id_css_transformations(html, _options) do
 end
 ~~~
 
-Et voilà, `pp_markdown` traite maintenant les lignes de type `classcss.Mon paragraphe trop stylé ! ».
-
-
+Et voilà, `pharkdown` traite maintenant les lignes de type `.classcss:Mon paragraphe trop stylé ! ».
 
 
 
