@@ -24,7 +24,7 @@ Comme je vais partir de phoenix-markdown, j’ajoute cette dépendance ainsi que
 {:earmark, "~> 1.4"},
 ~~~
 
-Je vais utiliser [markup](https://github.com/elixir-makeup/makeup/) et [markup-elixir](https://github.com/elixir-makeup/makeup_elixir) pour la colorisation syntaxique, il faut donc que j’ajouter ces dépendances à path(mix.ex) :
+Je vais utiliser [makeup](https://github.com/elixir-makeup/makeup/) et [makeup-elixir](https://github.com/elixir-makeup/makeup_elixir) pour la colorisation syntaxique, il faut donc que j’ajouter ces dépendances à path(mix.ex) :
 
 ~~~elixir
 {:makeup, "1.2.1"},
@@ -99,7 +99,7 @@ defmodule PPMarkdown.Engine do
 end 
 ~~~
 
-Et je l'essaie sur ma page [explorer_markdown_html/page-test.html.mmd](/explorer/markdown/?ipage=2) (revenir en cliquant sur le bouton « Retour en arrière » du navigateur ou choisir d’ouvrir la page dans une nouvelle fenêtre).
+Et je l'essaie sur ma page [explorer_markdown_html/page-test.phad](/explorer/markdown/?ipage=2) (revenir en cliquant sur le bouton « Retour en arrière » du navigateur ou choisir d’ouvrir la page dans une nouvelle fenêtre).
 
 Bingo ! 🥳 Ça fonctionne ! Je suis bien passé par le moteur de rendu et je peux maintenant traiter le code à ma guise.
 
