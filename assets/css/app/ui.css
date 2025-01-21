@@ -17,6 +17,9 @@ header {
   font-weight: bold;
   letter-spacing: 1.8px;
 }
+header a, header a:link, header a:visited {
+  color: inherit;
+}
 
 h1, h2, h3 {
   font-family: Geneva, Helvetica, Arial;
